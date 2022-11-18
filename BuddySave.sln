@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuddySave.IntegrationTests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuddySave.UnitTests", "BuddySave.UnitTests\BuddySave.UnitTests.csproj", "{8836B3AF-7619-4DEF-8A22-4F443A4A1888}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuddySave.TestTools", "BuddySave.TestTools\BuddySave.TestTools.csproj", "{668E48BA-6132-4AF9-90A4-BED75B153B89}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{8836B3AF-7619-4DEF-8A22-4F443A4A1888}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8836B3AF-7619-4DEF-8A22-4F443A4A1888}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8836B3AF-7619-4DEF-8A22-4F443A4A1888}.Release|Any CPU.Build.0 = Release|Any CPU
+		{668E48BA-6132-4AF9-90A4-BED75B153B89}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{668E48BA-6132-4AF9-90A4-BED75B153B89}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{668E48BA-6132-4AF9-90A4-BED75B153B89}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{668E48BA-6132-4AF9-90A4-BED75B153B89}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
