@@ -26,7 +26,7 @@ namespace BuddySave
 
         private static async Task Run(GameSave gameSave)
         {
-            Console.WriteLine("Input desired action (start, stop, exit):");
+            Console.WriteLine("Input desired action (load, save, exit):");
             var input = string.Empty;
             while (!string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
             {
