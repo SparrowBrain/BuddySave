@@ -19,8 +19,18 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
             return;
         }
 
-        await _cloudManager.CreateLock(gameSave);
-        _cloudManager.DownloadSave(gameSave);
+        try
+        {
+            await _cloudManager.CreateLock(gameSave);
+            _cloudManager.DownloadSave(gameSave);
+        }
+        catch(Exception)
+        {
+            _clientNotifier.Notify("Failed loading game save. Deleting game save lock...");
+            _cloudManager.DeleteLock(gameSave);
+            _clientNotifier.Notify("Game save lock released.");
+            return;
+        }
         
         _clientNotifier.Notify("Game save is prepared! Enjoy Buddy :)");
     }
@@ -32,10 +42,21 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
             _clientNotifier.Notify("There's no lock. Cannot save.");
             return;
         }
-        
-        _clientNotifier.Notify("Uploading game save to cloud...");
-        _cloudManager.UploadSave(gameSave);
-        _cloudManager.DeleteLock(gameSave);
-        _clientNotifier.Notify("Game save lock released.");
+
+        try
+        {
+            _clientNotifier.Notify("Uploading game save to cloud...");
+            _cloudManager.UploadSave(gameSave);
+            _clientNotifier.Notify("Game save uploaded.");
+        }
+        catch (Exception)
+        {
+            _clientNotifier.Notify("Upload failed.");
+        }
+        finally
+        {
+            _cloudManager.DeleteLock(gameSave);
+            _clientNotifier.Notify("Game save lock released.");
+        }
     }
 }
