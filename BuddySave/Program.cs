@@ -33,10 +33,10 @@ namespace BuddySave
                 input = Console.ReadLine();
                 switch (input)
                 {
-                    case "start":
+                    case "load":
                         await SharedSaveOrchestrator.Load(gameSave);
                         break;
-                    case "stop":
+                    case "save":
                         SharedSaveOrchestrator.Save(gameSave);
                         break;
                     case "exit":

@@ -75,7 +75,7 @@ public class SharedSaveOrchestratorTests
         sut.Save(gameSave);
         
         // Assert
-        clientNotifierMock.Verify(x => x.Notify("There's nothing to lock Buddy... :)"));
+        clientNotifierMock.Verify(x => x.Notify("There's no lock. Cannot save."));
         cloudManagerMock.Verify(x => x.UploadSave(It.IsAny<GameSave>()), Times.Never);
         cloudManagerMock.Verify(x => x.DeleteLock(It.IsAny<GameSave>()), Times.Never);
     }

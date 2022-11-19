@@ -29,7 +29,7 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
     {
         if (!_cloudManager.LockExists(gameSave))
         {
-            _clientNotifier.Notify("There's nothing to lock Buddy... :)");
+            _clientNotifier.Notify("There's no lock. Cannot save.");
             return;
         }
         
