@@ -1,6 +1,6 @@
 ﻿namespace BuddySave;
 
-internal interface ICloudManager
+public interface ICloudManager
 {
     void UploadSave(GameSave gameSave);
 
@@ -8,7 +8,7 @@ internal interface ICloudManager
 
     bool LockExists(GameSave save);
 
-    void CreateLock(GameSave save);
+    Task CreateLock(GameSave save);
 
     void DeleteLock(GameSave save);
 }

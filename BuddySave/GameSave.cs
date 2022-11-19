@@ -1,10 +1,17 @@
 ﻿namespace BuddySave;
 
-internal class GameSave
+public class GameSave
 {
-    private string Name { get; set; }
+    public string Name { get; set; }
 
-    private string LocalPath { get; set; }
+    public string LocalPath { get; set; }
 
-    private string CloudPath { get; set; }
+    public string CloudPath { get; set; }
+
+    public GameSave(string name, string localPath, string cloudPath)
+    {
+        Name = name;
+        LocalPath = localPath;
+        CloudPath = cloudPath;
+    }
 }
