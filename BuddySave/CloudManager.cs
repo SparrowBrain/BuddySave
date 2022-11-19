@@ -34,6 +34,16 @@ public class CloudManager : ICloudManager
 
     private static void CopyOverSaves(string sourcePath, string destinationPath)
     {
+        if (!Directory.Exists(sourcePath))
+        {
+            throw new Exception("Source not found! Cannot copy to destination.");
+        }
+        var files = Directory.GetFiles(sourcePath);
+        if (!files.Any())
+        {
+            throw new FileNotFoundException($"No files were found in source directory {sourcePath}");
+        }
+
         if (Directory.Exists(destinationPath))
         {
             Directory.Delete(destinationPath, true);
