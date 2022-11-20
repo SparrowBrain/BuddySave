@@ -2,14 +2,41 @@ namespace BuddySave;
 
 public class CloudManager : ICloudManager
 {
+    private readonly IBackupDirectoryProvider _backupDirectoryProvider;
+
+    public CloudManager(IBackupDirectoryProvider backupDirectoryProvider)
+    {
+        _backupDirectoryProvider = backupDirectoryProvider;
+    }
+    
     public void UploadSave(GameSave gameSave)
     {
-        CopyOverSaves(gameSave.LocalPath, gameSave.CloudPath);
+        ValidateSource(gameSave.LocalPath);
+        BackupFiles(gameSave.CloudPath, gameSave.Name, SaveType.Cloud);
+
+        try
+        {
+            CopyOverSaves(gameSave.LocalPath, gameSave.CloudPath);
+        }
+        catch (Exception)
+        {
+            RestoreBackup(gameSave.CloudPath, gameSave.Name, SaveType.Cloud);
+        }
     }
 
     public void DownloadSave(GameSave gameSave)
     {
-        CopyOverSaves(gameSave.CloudPath, gameSave.LocalPath);
+        ValidateSource(gameSave.CloudPath);
+        BackupFiles(gameSave.LocalPath, gameSave.Name, SaveType.Local);
+
+        try
+        {
+            CopyOverSaves(gameSave.CloudPath, gameSave.LocalPath);
+        }
+        catch (Exception)
+        {
+            RestoreBackup(gameSave.LocalPath, gameSave.Name, SaveType.Local);
+        }
     }
 
     public bool LockExists(GameSave save)
@@ -32,25 +59,50 @@ public class CloudManager : ICloudManager
         File.Delete(lockPath);
     }
 
-    private static void CopyOverSaves(string sourcePath, string destinationPath)
+    private static void ValidateSource(string sourcePath)
     {
         if (!Directory.Exists(sourcePath))
         {
             throw new Exception("Source not found! Cannot copy to destination.");
         }
+
         var files = Directory.GetFiles(sourcePath);
         if (!files.Any())
         {
             throw new FileNotFoundException($"No files were found in source directory {sourcePath}");
         }
+    }
 
+    private void BackupFiles(string sourcePath, string saveName, SaveType saveType)
+    {
+        if (!Directory.Exists(sourcePath))
+        {
+            return;
+        }
+
+        var files = Directory.GetFiles(sourcePath);
+        if (!files.Any())
+        {
+            return;
+        }
+        
+        CopyOverSaves(sourcePath, _backupDirectoryProvider.Get(saveName, saveType));
+    }
+
+    private void RestoreBackup(string destinationPath, string saveName, SaveType saveType)
+    {
+        CopyOverSaves(_backupDirectoryProvider.Get(saveName, saveType), destinationPath);
+    }
+    
+    private static void CopyOverSaves(string sourcePath, string destinationPath)
+    {
         if (Directory.Exists(destinationPath))
         {
             Directory.Delete(destinationPath, true);
         }
 
         Directory.CreateDirectory(destinationPath);
-
+        
         foreach (var file in Directory.GetFiles(sourcePath))
         {
             var fileName = Path.GetFileName(file);

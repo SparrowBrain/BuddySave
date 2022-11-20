@@ -8,7 +8,10 @@ namespace BuddySave
         
         static Program()
         {
-            SharedSaveOrchestrator = new SharedSaveOrchestrator(new CloudManager(), new ClientNotifier());
+            var backupDirectory = new BackupDirectoryProvider();
+            var cloudManager = new CloudManager(backupDirectory);
+            var clientNotifier = new ClientNotifier();
+            SharedSaveOrchestrator = new SharedSaveOrchestrator(cloudManager, clientNotifier);
         }
         
         private static async Task Main()
@@ -26,12 +29,12 @@ namespace BuddySave
 
         private static async Task Run(GameSave gameSave)
         {
-            Console.WriteLine("Input desired action (load, save, exit):");
             var input = string.Empty;
             while (!string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
             {
+                Console.WriteLine("Waiting for action command (load, save, exit):");
                 input = Console.ReadLine();
-                switch (input)
+                switch (input?.ToLowerInvariant())
                 {
                     case "load":
                         await SharedSaveOrchestrator.Load(gameSave);

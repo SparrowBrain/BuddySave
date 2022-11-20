@@ -2,6 +2,8 @@ using BuddySave.TestTools;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using AutoFixture.Xunit2;
+using Moq;
 using Xunit;
 
 namespace BuddySave.IntegrationTests
@@ -11,28 +13,22 @@ namespace BuddySave.IntegrationTests
         [Theory, AutoMoqData]
         public async Task UploadSave_DeletesOldCloudSave_WhenCloudSaveExists(
             string file,
+            string backupDirectoryPath,
             GameSave gameSave,
+            [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
             CloudManager sut)
         {
             // Arrange
-            using var cloudSave = new TempSaveDir(gameSave.CloudPath);
-            using var localSave = new TempSaveDir(gameSave.LocalPath);
-            gameSave.CloudPath = cloudSave.Path;
-            gameSave.LocalPath = localSave.Path;
-
-            cloudSave.Create();
-            localSave.Create();
-
-            var localPath = Path.Combine(localSave.Path, file);
-            await File.WriteAllTextAsync(localPath, "Test");
-            var oldSavePath = Path.Combine(cloudSave.Path, file);
-            await File.WriteAllTextAsync(oldSavePath, "Test");
+            var (cloudSave, oldSavePath) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
+            var (localSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
+            var backupSave = PrepareBackupDirectory(gameSave, backupDirectoryPath, backupDirectoryProviderMock, false);
 
             // Act
             sut.UploadSave(gameSave);
 
             // Assert
             Assert.False(Directory.Exists(oldSavePath));
+            DisposeTempSaves(cloudSave, localSave, backupSave);
         }
 
         [Theory, AutoMoqData]
@@ -42,21 +38,15 @@ namespace BuddySave.IntegrationTests
             CloudManager sut)
         {
             // Arrange
-            using var cloudSave = new TempSaveDir(gameSave.CloudPath);
-            using var localSave = new TempSaveDir(gameSave.LocalPath);
-            gameSave.CloudPath = cloudSave.Path;
-            gameSave.LocalPath = localSave.Path;
-
-            localSave.Create();
-
-            var localPath = Path.Combine(localSave.Path, file);
-            await File.WriteAllTextAsync(localPath, "Test");
+            var cloudSave = PrepareSaveDirectory(gameSave, SaveType.Cloud, false);
+            var (localSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
 
             // Act
             sut.UploadSave(gameSave);
 
             // Assert
             Assert.True(Directory.Exists(gameSave.CloudPath));
+            DisposeTempSaves(cloudSave, localSave);
         }
 
         [Theory, AutoMoqData]
@@ -66,21 +56,16 @@ namespace BuddySave.IntegrationTests
             CloudManager sut)
         {
             // Arrange
-            using var cloudSave = new TempSaveDir(gameSave.CloudPath);
-            using var localSave = new TempSaveDir(gameSave.LocalPath);
-            gameSave.CloudPath = cloudSave.Path;
-            gameSave.LocalPath = localSave.Path;
-
-            localSave.Create();
-            var localFilePath = Path.Combine(localSave.Path, file);
+            var cloudSave = PrepareSaveDirectory(gameSave, SaveType.Cloud, false);
+            var (localSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
             var cloudFilePath = Path.Combine(cloudSave.Path, file);
-            await File.WriteAllTextAsync(localFilePath, "Test");
 
             // Act
             sut.UploadSave(gameSave);
 
             // Assert
             Assert.True(File.Exists(cloudFilePath));
+            DisposeTempSaves(cloudSave, localSave);
         }
 
         [Theory, AutoMoqData]
@@ -90,12 +75,7 @@ namespace BuddySave.IntegrationTests
             CloudManager sut)
         {
             // Arrange
-            using var cloudSave = new TempSaveDir(gameSave.CloudPath);
-            gameSave.CloudPath = cloudSave.Path;
-
-            cloudSave.Create();
-            var cloudFilePath = Path.Combine(cloudSave.Path, file);
-            await File.WriteAllTextAsync(cloudFilePath, "Test");
+            var (cloudSave, cloudFilePath) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
 
             // Act
             var act = new Action(() => sut.UploadSave(gameSave));
@@ -103,6 +83,7 @@ namespace BuddySave.IntegrationTests
             // Assert
             Assert.ThrowsAny<Exception>(act);
             Assert.True(File.Exists(cloudFilePath));
+            DisposeTempSaves(cloudSave);
         }
 
         [Theory, AutoMoqData]
@@ -112,15 +93,8 @@ namespace BuddySave.IntegrationTests
             CloudManager sut)
         {
             // Arrange
-            using var cloudSave = new TempSaveDir(gameSave.CloudPath);
-            using var localSave = new TempSaveDir(gameSave.LocalPath);
-            gameSave.CloudPath = cloudSave.Path;
-            gameSave.LocalPath = localSave.Path;
-
-            cloudSave.Create();
-            localSave.Create();
-            var cloudFilePath = Path.Combine(cloudSave.Path, file);
-            await File.WriteAllTextAsync(cloudFilePath, "Test");
+            var (cloudSave, cloudFilePath) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
+            var localSave = PrepareSaveDirectory(gameSave, SaveType.Local, true);
 
             // Act
             var act = new Action(() => sut.UploadSave(gameSave));
@@ -128,33 +102,72 @@ namespace BuddySave.IntegrationTests
             // Assert
             Assert.ThrowsAny<Exception>(act);
             Assert.True(File.Exists(cloudFilePath));
+            DisposeTempSaves(cloudSave, localSave);
+        }
+
+        [Theory, AutoMoqData]
+        public async Task UploadSave_BackupsCloudSaves_When_CloudSavesExistAndBackupDoesNot(
+            string file,
+            string backupDirectoryPath,
+            GameSave gameSave,
+            [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
+            CloudManager sut)
+        {
+            // Arrange
+            var (cloudSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
+            var (localSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
+            var backupSave = PrepareBackupDirectory(gameSave, backupDirectoryPath, backupDirectoryProviderMock, false);
+            var backupFilePath = Path.Combine(backupSave.Path, file);
+            
+            // Act
+            sut.UploadSave(gameSave);
+
+            // Assert
+            Assert.True(File.Exists(backupFilePath));
+            DisposeTempSaves(cloudSave, localSave, backupSave);
+        }
+
+        [Theory, AutoMoqData]
+        public async Task UploadSave_OverridesOldBackupWithNewer_When_CloudSavesExistAndBackupAlreadyExist(
+            string oldFile,
+            string file,
+            string backupDirectoryPath,
+            GameSave gameSave,
+            [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
+            CloudManager sut)
+        {
+            // Arrange
+            var (cloudSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
+            var (localSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
+            var (backupSave, backupFilePathOld) = await PrepareBackupDirectoryWithFile(gameSave, backupDirectoryPath, backupDirectoryProviderMock, oldFile);
+            
+            // Act
+            sut.UploadSave(gameSave);
+
+            // Assert
+            Assert.False(File.Exists(backupFilePathOld));
+            DisposeTempSaves(cloudSave, localSave, backupSave);
         }
 
         [Theory, AutoMoqData]
         public async Task DownloadSave_DeletesOldLocalSave_WhenLocalSaveExists(
             string file,
+            string backupDirectoryPath,
             GameSave gameSave,
+            [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
             CloudManager sut)
         {
             // Arrange
-            using var localSave = new TempSaveDir(gameSave.LocalPath);
-            using var cloudSave = new TempSaveDir(gameSave.CloudPath);
-            gameSave.LocalPath = localSave.Path;
-            gameSave.CloudPath = cloudSave.Path;
-
-            localSave.Create();
-            cloudSave.Create();
-
-            var cloudFilePath = Path.Combine(cloudSave.Path, file);
-            await File.WriteAllTextAsync(cloudFilePath, "Test");
-            var oldSavePath = Path.Combine(localSave.Path, file);
-            await File.WriteAllTextAsync(oldSavePath, "Test");
+            var (cloudSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
+            var (localSave, localFilePath) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
+            var backupSave = PrepareBackupDirectory(gameSave, backupDirectoryPath, backupDirectoryProviderMock, false);
 
             // Act
             sut.DownloadSave(gameSave);
 
             // Assert
-            Assert.False(Directory.Exists(oldSavePath));
+            Assert.False(Directory.Exists(localFilePath));
+            DisposeTempSaves(cloudSave, localSave, backupSave);
         }
 
         [Theory, AutoMoqData]
@@ -164,21 +177,15 @@ namespace BuddySave.IntegrationTests
             CloudManager sut)
         {
             // Arrange
-            using var localSave = new TempSaveDir(gameSave.LocalPath);
-            using var cloudSave = new TempSaveDir(gameSave.CloudPath);
-            gameSave.LocalPath = localSave.Path;
-            gameSave.CloudPath = cloudSave.Path;
-
-            cloudSave.Create();
-
-            var cloudFilePath = Path.Combine(cloudSave.Path, file);
-            await File.WriteAllTextAsync(cloudFilePath, "Test");
-
+            var (cloudSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
+            var localSave = PrepareSaveDirectory(gameSave, SaveType.Local, false);
+            
             // Act
             sut.DownloadSave(gameSave);
 
             // Assert
             Assert.True(Directory.Exists(gameSave.LocalPath));
+            DisposeTempSaves(cloudSave, localSave);
         }
 
         [Theory, AutoMoqData]
@@ -188,21 +195,16 @@ namespace BuddySave.IntegrationTests
             CloudManager sut)
         {
             // Arrange
-            using var localSave = new TempSaveDir(gameSave.LocalPath);
-            using var cloudSave = new TempSaveDir(gameSave.CloudPath);
-            gameSave.LocalPath = localSave.Path;
-            gameSave.CloudPath = cloudSave.Path;
-
-            cloudSave.Create();
-            var cloudFilePath = Path.Combine(cloudSave.Path, file);
+            var (cloudSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
+            var localSave = PrepareSaveDirectory(gameSave, SaveType.Local, false);
             var localFilePath = Path.Combine(localSave.Path, file);
-            await File.WriteAllTextAsync(cloudFilePath, "Test");
 
             // Act
             sut.DownloadSave(gameSave);
 
             // Assert
             Assert.True(File.Exists(localFilePath));
+            DisposeTempSaves(cloudSave, localSave);
         }
 
         [Theory, AutoMoqData]
@@ -212,12 +214,7 @@ namespace BuddySave.IntegrationTests
             CloudManager sut)
         {
             // Arrange
-            using var localSave = new TempSaveDir(gameSave.LocalPath);
-            gameSave.LocalPath = localSave.Path;
-
-            localSave.Create();
-            var localFilePath = Path.Combine(localSave.Path, file);
-            await File.WriteAllTextAsync(localFilePath, "Test");
+            var (localSave, localFilePath) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
 
             // Act
             var act = new Action(() => sut.DownloadSave(gameSave));
@@ -225,6 +222,7 @@ namespace BuddySave.IntegrationTests
             // Assert
             Assert.ThrowsAny<Exception>(act);
             Assert.True(File.Exists(localFilePath));
+            DisposeTempSaves(localSave);
         }
 
         [Theory, AutoMoqData]
@@ -234,15 +232,8 @@ namespace BuddySave.IntegrationTests
             CloudManager sut)
         {
             // Arrange
-            using var localSave = new TempSaveDir(gameSave.LocalPath);
-            using var cloudSave = new TempSaveDir(gameSave.CloudPath);
-            gameSave.LocalPath = localSave.Path;
-            gameSave.CloudPath = cloudSave.Path;
-
-            localSave.Create();
-            cloudSave.Create();
-            var localFilePath = Path.Combine(localSave.Path, file);
-            await File.WriteAllTextAsync(localFilePath, "Test");
+            var (localSave, localFilePath) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
+            var cloudSave = PrepareSaveDirectory(gameSave, SaveType.Cloud, true);
 
             // Act
             var act = new Action(() => sut.DownloadSave(gameSave));
@@ -250,6 +241,51 @@ namespace BuddySave.IntegrationTests
             // Assert
             Assert.ThrowsAny<Exception>(act);
             Assert.True(File.Exists(localFilePath));
+            DisposeTempSaves(localSave, cloudSave);
+        }
+
+        [Theory, AutoMoqData]
+        public async Task DownloadSave_BackupsCloudSaves_When_CloudSavesExistAndBackupDoesNot(
+            string file,
+            string backupDirectoryPath,
+            GameSave gameSave,
+            [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
+            CloudManager sut)
+        {
+            // Arrange
+            var (cloudSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
+            var (localSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
+            var backupSave = PrepareBackupDirectory(gameSave, backupDirectoryPath, backupDirectoryProviderMock, false);
+            var backupFilePath = Path.Combine(backupSave.Path, file);
+            
+            // Act
+            sut.DownloadSave(gameSave);
+
+            // Assert
+            Assert.True(File.Exists(backupFilePath));
+            DisposeTempSaves(cloudSave, localSave, backupSave);
+        }
+
+        [Theory, AutoMoqData]
+        public async Task DownloadSave_OverridesOldBackupWithNewer_When_CloudSavesExistAndBackupAlreadyExist(
+            string oldFile,
+            string file,
+            string backupDirectoryPath,
+            GameSave gameSave,
+            [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
+            CloudManager sut)
+        {
+            // Arrange
+            var (cloudSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Cloud, file);
+            var (localSave, _) = await PrepareSaveDirectoryWithFile(gameSave, SaveType.Local, file);
+            var (backupSave, backupFilePathOld) = await PrepareBackupDirectoryWithFile(gameSave, backupDirectoryPath, backupDirectoryProviderMock, oldFile);
+            
+            // Act
+            sut.DownloadSave(gameSave);
+
+            // Assert
+            Assert.False(File.Exists(backupFilePathOld));
+            DisposeTempSaves(cloudSave, localSave, backupSave);
         }
 
         [Theory, AutoMoqData]
@@ -347,6 +383,65 @@ namespace BuddySave.IntegrationTests
             Assert.False(File.Exists(lockFile.LockPath));
         }
 
+        private static TempSaveDir PrepareSaveDirectory(GameSave gameSave, SaveType saveType, bool createDirectory)
+        {
+            var dirName = saveType == SaveType.Cloud ? gameSave.CloudPath : gameSave.LocalPath;
+            var save = new TempSaveDir(dirName);
+
+            if (saveType == SaveType.Cloud)
+            {
+                gameSave.CloudPath = save.Path;
+            } 
+            else
+            {
+                gameSave.LocalPath = save.Path;
+            }
+
+            if (createDirectory)
+            {
+                save.Create();
+            }
+            
+            return save;
+        }
+
+        private static async Task<(TempSaveDir, string)> PrepareSaveDirectoryWithFile(GameSave gameSave, SaveType saveType, string file)
+        {
+            var save = PrepareSaveDirectory(gameSave, saveType, true);
+            var filePath = Path.Combine(save.Path, file);
+            await File.WriteAllTextAsync(filePath, "Test");
+            return (save, filePath);
+        }
+
+        private static TempSaveDir PrepareBackupDirectory(GameSave gameSave, string backupDirectoryPath, Mock<IBackupDirectoryProvider> backupDirectoryProviderMock, bool createDirectory)
+        {
+            var backupSave = new TempSaveDir(backupDirectoryPath);
+            backupDirectoryProviderMock.Setup(x => x.Get(It.IsAny<string>(), It.IsAny<SaveType>())).Returns(backupSave.Path);
+
+            if (createDirectory)
+            {
+                backupSave.Create();
+            }
+            
+            return backupSave;
+        }
+        
+        private static async Task<(TempSaveDir, string)> PrepareBackupDirectoryWithFile(GameSave gameSave, string backupDirectoryPath, Mock<IBackupDirectoryProvider> backupDirectoryProviderMock, string file)
+        {
+            var backupSave = PrepareBackupDirectory(gameSave, backupDirectoryPath, backupDirectoryProviderMock, true);
+            var filePath = Path.Combine(backupSave.Path, file);
+            await File.WriteAllTextAsync(filePath, "backup test");
+            return (backupSave, filePath);
+        }
+
+        private static void DisposeTempSaves(params TempSaveDir[] saves)
+        {
+            foreach (var save in saves)
+            {
+                save.Dispose();
+            }
+        }
+
         private class TempLockFile : IDisposable
         {
             public TempLockFile()
@@ -369,7 +464,7 @@ namespace BuddySave.IntegrationTests
                 await File.WriteAllTextAsync(LockPath, "This is a test lock");
             }
         }
-
+        
         private class TempSaveDir : IDisposable
         {
             public TempSaveDir(string dirName)
