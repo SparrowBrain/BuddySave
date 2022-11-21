@@ -6,6 +6,6 @@ public class BackupDirectoryProvider : IBackupDirectoryProvider
 
     public string Get(string saveName, SaveType saveType)
     {
-        return BackupDirectoryPrefix + saveName + saveType;
+        return $"{BackupDirectoryPrefix}_{saveName}_{SaveType.Cloud}";
     }
 }

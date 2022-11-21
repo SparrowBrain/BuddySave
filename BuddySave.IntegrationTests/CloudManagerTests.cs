@@ -128,7 +128,7 @@ namespace BuddySave.IntegrationTests
         }
 
         [Theory, AutoMoqData]
-        public async Task UploadSave_OverridesOldBackupWithNewer_When_CloudSavesExistAndBackupAlreadyExist(
+        public async Task UploadSave_OverridesCloudOldBackupWithNewer_When_CloudSavesExistAndBackupAlreadyExist(
             string oldFile,
             string file,
             string backupDirectoryPath,
@@ -245,7 +245,7 @@ namespace BuddySave.IntegrationTests
         }
 
         [Theory, AutoMoqData]
-        public async Task DownloadSave_BackupsCloudSaves_When_CloudSavesExistAndBackupDoesNot(
+        public async Task DownloadSave_BackupsLocalSaves_When_CloudSavesExistAndBackupDoesNot(
             string file,
             string backupDirectoryPath,
             GameSave gameSave,
@@ -267,7 +267,7 @@ namespace BuddySave.IntegrationTests
         }
 
         [Theory, AutoMoqData]
-        public async Task DownloadSave_OverridesOldBackupWithNewer_When_CloudSavesExistAndBackupAlreadyExist(
+        public async Task DownloadSave_OverridesOldLocalBackupWithNewer_When_CloudSavesExistAndBackupAlreadyExist(
             string oldFile,
             string file,
             string backupDirectoryPath,

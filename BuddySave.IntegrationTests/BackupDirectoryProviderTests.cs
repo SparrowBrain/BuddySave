@@ -11,7 +11,7 @@ public class BackupDirectoryProviderTests
         BackupDirectoryProvider sut)
     {
         // Arrange
-        var expectedResult = "SavesBackup" + saveName + SaveType.Cloud;
+        var expectedResult = $"SavesBackup_{saveName}_{SaveType.Cloud}";
         
         // Act
         var result = sut.Get(saveName, SaveType.Cloud);
