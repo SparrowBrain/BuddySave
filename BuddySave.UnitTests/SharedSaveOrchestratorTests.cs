@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using AutoFixture.Xunit2;
 using BuddySave.TestTools;
@@ -27,6 +28,44 @@ public class SharedSaveOrchestratorTests
         cloudManagerMock.Verify(x => x.DownloadSave(gameSave), Times.Never);
     }
 
+    [Theory, AutoMoqData]
+    public async Task Load_CallDeleteLock_When_CreateLockThrowsException(
+        GameSave gameSave, 
+        [Frozen] Mock<ICloudManager> cloudManagerMock,
+        [Frozen] Mock<IClientNotifier> clientNotifierMock,
+        SharedSaveOrchestrator sut)
+    {
+        // Arrange
+        cloudManagerMock.Setup(x => x.CreateLock(It.IsAny<GameSave>())).Throws<Exception>();
+
+        // Act
+        await sut.Load(gameSave);
+
+        // Assert
+        cloudManagerMock.Verify(x => x.DeleteLock(gameSave), Times.Once);
+        clientNotifierMock.Verify(x => x.Notify("Failed loading game save. Deleting game save lock..."), Times.Once);
+        clientNotifierMock.Verify(x => x.Notify("Game save lock released."), Times.Once);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task Load_CallDeleteLock_When_DownloadThrowsException(
+        GameSave gameSave, 
+        [Frozen] Mock<ICloudManager> cloudManagerMock,
+        [Frozen] Mock<IClientNotifier> clientNotifierMock,
+        SharedSaveOrchestrator sut)
+    {
+        // Arrange
+        cloudManagerMock.Setup(x => x.DownloadSave(It.IsAny<GameSave>())).Throws<Exception>();
+
+        // Act
+        await sut.Load(gameSave);
+
+        // Assert
+        cloudManagerMock.Verify(x => x.DeleteLock(gameSave), Times.Once);
+        clientNotifierMock.Verify(x => x.Notify("Failed loading game save. Deleting game save lock..."), Times.Once);
+        clientNotifierMock.Verify(x => x.Notify("Game save lock released."), Times.Once);
+    }
+    
     [Theory, AutoMoqData]
     public async Task Load_CreateLockFile_When_GameSaveIsNotLocked(
         GameSave gameSave, 
@@ -95,6 +134,7 @@ public class SharedSaveOrchestratorTests
 
         // Assert
         clientNotifierMock.Verify(x => x.Notify("Uploading game save to cloud..."), Times.Once);
+        clientNotifierMock.Verify(x => x.Notify("Game save uploaded."), Times.Once);
         cloudManagerMock.Verify(x => x.UploadSave(gameSave), Times.Once);
     }
 
@@ -114,5 +154,42 @@ public class SharedSaveOrchestratorTests
         // Assert
         clientNotifierMock.Verify(x => x.Notify("Game save lock released."), Times.Once);
         cloudManagerMock.Verify(x => x.DeleteLock(gameSave), Times.Once);
+    }
+
+    [Theory, AutoMoqData]
+    public void Save_DeleteLockFile_When_UploadThrowsException(
+        GameSave gameSave,
+        [Frozen] Mock<ICloudManager> cloudManagerMock,
+        [Frozen] Mock<IClientNotifier> clientNotifierMock,
+        SharedSaveOrchestrator sut)
+    {
+        // Arrange
+        cloudManagerMock.Setup(x => x.LockExists(It.IsAny<GameSave>())).Returns(true);
+        cloudManagerMock.Setup(x => x.UploadSave(It.IsAny<GameSave>())).Throws<Exception>();
+
+        // Act
+        sut.Save(gameSave);
+
+        // Assert
+        clientNotifierMock.Verify(x => x.Notify("Game save lock released."), Times.Once);
+        cloudManagerMock.Verify(x => x.DeleteLock(gameSave), Times.Once);
+    }
+
+    [Theory, AutoMoqData]
+    public void Save_NotifyClient_When_UploadFails(
+        GameSave gameSave,
+        [Frozen] Mock<ICloudManager> cloudManagerMock,
+        [Frozen] Mock<IClientNotifier> clientNotifierMock,
+        SharedSaveOrchestrator sut)
+    {
+        // Arrange
+        cloudManagerMock.Setup(x => x.LockExists(It.IsAny<GameSave>())).Returns(true);
+        cloudManagerMock.Setup(x => x.UploadSave(It.IsAny<GameSave>())).Throws<Exception>();
+        
+        // Act
+        sut.Save(gameSave);
+
+        // Assert
+        clientNotifierMock.Verify(x => x.Notify("Upload failed."), Times.Once);
     }
 }
