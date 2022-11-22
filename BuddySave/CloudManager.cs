@@ -3,20 +3,22 @@ namespace BuddySave;
 public class CloudManager : ICloudManager
 {
     private readonly IBackupDirectoryProvider _backupDirectoryProvider;
+    private readonly ISaveCopier _saveCopier;
 
-    public CloudManager(IBackupDirectoryProvider backupDirectoryProvider)
+    public CloudManager(IBackupDirectoryProvider backupDirectoryProvider, ISaveCopier saveCopier)
     {
         _backupDirectoryProvider = backupDirectoryProvider;
+        _saveCopier = saveCopier;
     }
-    
+
     public void UploadSave(GameSave gameSave)
     {
-        ValidateSource(gameSave.LocalPath);
+        _saveCopier.ValidateSource(gameSave.Name, gameSave.LocalPath);
         BackupFiles(gameSave.CloudPath, gameSave.Name, SaveType.Cloud);
 
         try
         {
-            CopyOverSaves(gameSave.LocalPath, gameSave.CloudPath);
+            _saveCopier.CopyOverSaves(gameSave.Name, gameSave.LocalPath, gameSave.CloudPath);
         }
         catch (Exception)
         {
@@ -26,12 +28,12 @@ public class CloudManager : ICloudManager
 
     public void DownloadSave(GameSave gameSave)
     {
-        ValidateSource(gameSave.CloudPath);
+        _saveCopier.ValidateSource(gameSave.Name, gameSave.CloudPath);
         BackupFiles(gameSave.LocalPath, gameSave.Name, SaveType.Local);
 
         try
         {
-            CopyOverSaves(gameSave.CloudPath, gameSave.LocalPath);
+            _saveCopier.CopyOverSaves(gameSave.Name, gameSave.CloudPath, gameSave.LocalPath);
         }
         catch (Exception)
         {
@@ -59,59 +61,24 @@ public class CloudManager : ICloudManager
         File.Delete(lockPath);
     }
 
-    private static void ValidateSource(string sourcePath)
-    {
-        if (!Directory.Exists(sourcePath))
-        {
-            throw new Exception("Source not found! Cannot copy to destination.");
-        }
-
-        var files = Directory.GetFiles(sourcePath);
-        if (!files.Any())
-        {
-            throw new FileNotFoundException($"No files were found in source directory {sourcePath}");
-        }
-    }
-
     private void BackupFiles(string sourcePath, string saveName, SaveType saveType)
     {
-        if (!Directory.Exists(sourcePath))
+        try
         {
+            _saveCopier.ValidateSource(saveName, sourcePath);
+        }
+        catch
+        {
+            // _logger.Info($"Nothing to backup in {sourcePath}");
             return;
         }
 
-        var files = Directory.GetFiles(sourcePath);
-        if (!files.Any())
-        {
-            return;
-        }
-        
-        CopyOverSaves(sourcePath, _backupDirectoryProvider.Get(saveName, saveType));
+        _saveCopier.CopyOverSaves(saveName, sourcePath, _backupDirectoryProvider.Get(saveName, saveType));
     }
 
     private void RestoreBackup(string destinationPath, string saveName, SaveType saveType)
     {
-        CopyOverSaves(_backupDirectoryProvider.Get(saveName, saveType), destinationPath);
-    }
-    
-    private static void CopyOverSaves(string sourcePath, string destinationPath)
-    {
-        if (Directory.Exists(destinationPath))
-        {
-            Directory.Delete(destinationPath, true);
-        }
-
-        Directory.CreateDirectory(destinationPath);
-        
-        foreach (var file in Directory.GetFiles(sourcePath))
-        {
-            var fileName = Path.GetFileName(file);
-            var destinationFile = Path.Combine(destinationPath, fileName);
-
-            File.Copy(file, destinationFile);
-
-            // TODO: check if file is a folder and copy files with recursion if it is
-        }
+        _saveCopier.CopyOverSaves(saveName, _backupDirectoryProvider.Get(saveName, saveType), destinationPath);
     }
 
     private static string GetLockPath(GameSave save)

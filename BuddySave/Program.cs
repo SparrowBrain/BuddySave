@@ -5,23 +5,24 @@ namespace BuddySave
     internal class Program
     {
         private static readonly ISharedSaveOrchestrator SharedSaveOrchestrator;
-        
+
         static Program()
         {
             var backupDirectory = new BackupDirectoryProvider();
-            var cloudManager = new CloudManager(backupDirectory);
+            var saveCopier = new SaveCopier();
+            var cloudManager = new CloudManager(backupDirectory, saveCopier);
             var clientNotifier = new ClientNotifier();
             SharedSaveOrchestrator = new SharedSaveOrchestrator(cloudManager, clientNotifier);
         }
-        
+
         private static async Task Main()
         {
             Console.WriteLine("∞∞∞∞∞∞∞ Buddy Save ∞∞∞∞∞∞∞");
-            
+
             var config = await LoadConfiguration();
-            var gameSave = new GameSave(config.Name, config.LocalPath, config.CloudPath);
+            var gameSave = new GameSave(config.Game.SaveName, config.Game.SavePath, Path.Combine(config.CloudPath, config.Game.Name));
             await Run(gameSave);
-            
+
             Console.WriteLine("Bye Buddy! ;)");
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
@@ -39,9 +40,11 @@ namespace BuddySave
                     case "load":
                         await SharedSaveOrchestrator.Load(gameSave);
                         break;
+
                     case "save":
                         SharedSaveOrchestrator.Save(gameSave);
                         break;
+
                     case "exit":
                         break;
                 }
@@ -62,7 +65,7 @@ namespace BuddySave
             {
                 throw new FileLoadException("Could not load configuration", "config.json");
             }
-            
+
             return config;
         }
     }
