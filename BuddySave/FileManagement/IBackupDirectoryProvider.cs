@@ -1,4 +1,6 @@
-﻿namespace BuddySave;
+﻿using BuddySave.Core.Models;
+
+namespace BuddySave.FileManagement;
 
 public interface IBackupDirectoryProvider
 {

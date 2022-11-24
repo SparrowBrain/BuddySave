@@ -2,6 +2,8 @@ using BuddySave.TestTools;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using BuddySave.Core;
+using BuddySave.Core.Models;
 using Xunit;
 
 namespace BuddySave.IntegrationTests

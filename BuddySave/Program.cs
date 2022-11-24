@@ -1,4 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using BuddySave.Configuration;
+using BuddySave.Core;
+using BuddySave.Core.Models;
+using BuddySave.FileManagement;
+using BuddySave.Notifications;
+using Newtonsoft.Json;
 
 namespace BuddySave
 {
@@ -51,7 +56,7 @@ namespace BuddySave
             }
         }
 
-        private static async Task<Configuration> LoadConfiguration()
+        private static async Task<BuddySaveConfiguration> LoadConfiguration()
         {
             Console.WriteLine("Reading configuration file...");
             var configFile = await File.ReadAllTextAsync("config.json");
@@ -60,7 +65,7 @@ namespace BuddySave
                 throw new FileNotFoundException("Configuration file was not found", "config.json");
             }
 
-            var config = JsonConvert.DeserializeObject<Configuration>(configFile);
+            var config = JsonConvert.DeserializeObject<BuddySaveConfiguration>(configFile);
             if (config == null)
             {
                 throw new FileLoadException("Could not load configuration", "config.json");

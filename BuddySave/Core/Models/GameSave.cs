@@ -1,4 +1,4 @@
-﻿namespace BuddySave;
+﻿namespace BuddySave.Core.Models;
 
 public class GameSave
 {

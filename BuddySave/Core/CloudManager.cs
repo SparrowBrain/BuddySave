@@ -1,4 +1,7 @@
-namespace BuddySave;
+using BuddySave.Core.Models;
+using BuddySave.FileManagement;
+
+namespace BuddySave.Core;
 
 public class CloudManager : ICloudManager
 {

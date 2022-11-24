@@ -1,4 +1,7 @@
-﻿namespace BuddySave;
+﻿using BuddySave.Core.Models;
+using BuddySave.Notifications;
+
+namespace BuddySave.Core;
 
 public class SharedSaveOrchestrator : ISharedSaveOrchestrator
 {

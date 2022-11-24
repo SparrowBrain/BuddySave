@@ -1,4 +1,4 @@
-﻿namespace BuddySave;
+﻿namespace BuddySave.FileManagement;
 
 public interface ISaveCopier
 {
