@@ -1,4 +1,4 @@
-﻿namespace BuddySave;
+﻿namespace BuddySave.Notifications;
 
 public interface IClientNotifier
 {

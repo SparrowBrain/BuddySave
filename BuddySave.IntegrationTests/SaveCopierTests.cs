@@ -2,6 +2,7 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using BuddySave.FileManagement;
 using Xunit;
 
 namespace BuddySave.IntegrationTests

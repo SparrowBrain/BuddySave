@@ -1,4 +1,4 @@
-﻿namespace BuddySave
+﻿namespace BuddySave.Configuration
 {
     public class GameConfiguration
     {

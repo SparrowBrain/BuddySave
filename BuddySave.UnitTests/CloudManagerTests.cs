@@ -2,6 +2,9 @@
 using BuddySave.TestTools;
 using Moq;
 using System;
+using BuddySave.Core;
+using BuddySave.Core.Models;
+using BuddySave.FileManagement;
 using Xunit;
 
 namespace BuddySave.UnitTests

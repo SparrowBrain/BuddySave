@@ -1,6 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using AutoFixture.Xunit2;
+using BuddySave.Core;
+using BuddySave.Core.Models;
+using BuddySave.Notifications;
 using BuddySave.TestTools;
 using Moq;
 using Xunit;
