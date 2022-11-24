@@ -1,19 +1,19 @@
-using BuddySave.TestTools;
 using System;
 using System.IO;
 using System.Threading.Tasks;
 using BuddySave.Core;
 using BuddySave.Core.Models;
+using BuddySave.TestTools;
 using Xunit;
 
-namespace BuddySave.IntegrationTests
+namespace BuddySave.IntegrationTests.Core
 {
-    public class CloudManagerTests
+    public class LockManagerTests
     {
         [Theory, AutoMoqData]
         public void LockExists_ReturnsFalse_WhenNoLockFile(
             GameSave gameSave,
-            CloudManager sut)
+            LockManager sut)
         {
             // Act
             var result = sut.LockExists(gameSave);
@@ -25,7 +25,7 @@ namespace BuddySave.IntegrationTests
         [Theory, AutoMoqData]
         public async Task LockExists_ReturnsTrue_WhenLockFileExists(
             GameSave gameSave,
-            CloudManager sut)
+            LockManager sut)
         {
             // Arrange
             using var lockFile = new TempLockFile();
@@ -42,7 +42,7 @@ namespace BuddySave.IntegrationTests
         [Theory, AutoMoqData]
         public async Task CreateLock_ThrowsException_WhenLockExists(
             GameSave gameSave,
-            CloudManager sut)
+            LockManager sut)
         {
             // Arrange
             using var lockFile = new TempLockFile();
@@ -59,7 +59,7 @@ namespace BuddySave.IntegrationTests
         [Theory, AutoMoqData]
         public async Task CreateLock_CreatesLock_WhenLockDoesNotExist(
             GameSave gameSave,
-            CloudManager sut)
+            LockManager sut)
         {
             // Arrange
             using var lockFile = new TempLockFile();
@@ -75,7 +75,7 @@ namespace BuddySave.IntegrationTests
         [Theory, AutoMoqData]
         public async Task DeleteLock_DeletesLock_WhenLockExists(
             GameSave gameSave,
-            CloudManager sut)
+            LockManager sut)
         {
             // Arrange
             using var lockFile = new TempLockFile();
@@ -92,7 +92,7 @@ namespace BuddySave.IntegrationTests
         [Theory, AutoMoqData]
         public void DeleteLock_DoesNothing_WhenLockDoesNotExist(
             GameSave gameSave,
-            CloudManager sut)
+            LockManager sut)
         {
             // Arrange
             using var lockFile = new TempLockFile();

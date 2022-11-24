@@ -5,18 +5,20 @@ namespace BuddySave.Core;
 
 public class SharedSaveOrchestrator : ISharedSaveOrchestrator
 {
-    private readonly ICloudManager _cloudManager;
+    private readonly IGameSaveSyncManager _gameSaveSyncManager;
+    private readonly ILockManager _lockManager;
     private readonly IClientNotifier _clientNotifier;
 
-    public SharedSaveOrchestrator(ICloudManager cloudManager, IClientNotifier clientNotifier)
+    public SharedSaveOrchestrator(IGameSaveSyncManager gameSaveSyncManager, ILockManager lockManager, IClientNotifier clientNotifier)
     {
-        _cloudManager = cloudManager;
+        _gameSaveSyncManager = gameSaveSyncManager;
+        _lockManager = lockManager;
         _clientNotifier = clientNotifier;
     }
     
     public async Task Load(GameSave gameSave)
     {
-        if (_cloudManager.LockExists(gameSave))
+        if (_lockManager.LockExists(gameSave))
         {
             _clientNotifier.Notify("Game save is locked, your friends are playing!");
             return;
@@ -24,13 +26,13 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
 
         try
         {
-            await _cloudManager.CreateLock(gameSave);
-            _cloudManager.DownloadSave(gameSave);
+            await _lockManager.CreateLock(gameSave);
+            _gameSaveSyncManager.DownloadSave(gameSave);
         }
         catch(Exception)
         {
             _clientNotifier.Notify("Failed loading game save. Deleting game save lock...");
-            _cloudManager.DeleteLock(gameSave);
+            _lockManager.DeleteLock(gameSave);
             _clientNotifier.Notify("Game save lock released.");
             return;
         }
@@ -40,7 +42,7 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
 
     public void Save(GameSave gameSave)
     {
-        if (!_cloudManager.LockExists(gameSave))
+        if (!_lockManager.LockExists(gameSave))
         {
             _clientNotifier.Notify("There's no lock. Cannot save.");
             return;
@@ -49,7 +51,7 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
         try
         {
             _clientNotifier.Notify("Uploading game save to cloud...");
-            _cloudManager.UploadSave(gameSave);
+            _gameSaveSyncManager.UploadSave(gameSave);
             _clientNotifier.Notify("Game save uploaded.");
         }
         catch (Exception)
@@ -58,7 +60,7 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
         }
         finally
         {
-            _cloudManager.DeleteLock(gameSave);
+            _lockManager.DeleteLock(gameSave);
             _clientNotifier.Notify("Game save lock released.");
         }
     }

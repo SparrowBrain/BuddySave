@@ -13,11 +13,13 @@ namespace BuddySave
 
         static Program()
         {
-            var backupDirectory = new BackupDirectoryProvider();
+            var backupDirectoryProvider = new BackupDirectoryProvider();
             var saveCopier = new SaveCopier();
-            var cloudManager = new CloudManager(backupDirectory, saveCopier);
+            var backupManager = new BackupManager(backupDirectoryProvider, saveCopier);
+            var gameSaveSyncManager = new GameSaveSyncManager(saveCopier, backupManager);
+            var lockManager = new LockManager();
             var clientNotifier = new ClientNotifier();
-            SharedSaveOrchestrator = new SharedSaveOrchestrator(cloudManager, clientNotifier);
+            SharedSaveOrchestrator = new SharedSaveOrchestrator(gameSaveSyncManager, lockManager, clientNotifier);
         }
 
         private static async Task Main()
