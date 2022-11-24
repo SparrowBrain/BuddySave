@@ -4,6 +4,7 @@ using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.TestTools;
 using Moq;
+using NLog;
 using Xunit;
 
 namespace BuddySave.UnitTests.FileManagement;
@@ -16,6 +17,7 @@ public class BackupManagerTests
         string savePath,
         SaveType saveType,
         [Frozen] Mock<ISaveCopier> saveCopierMock,
+        [Frozen] Mock<ILogger> loggerMock,
         BackupManager sut)
     {
         // Arrange
@@ -26,6 +28,7 @@ public class BackupManagerTests
 
         // Assert
         saveCopierMock.Verify(x => x.CopyOverSaves(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        loggerMock.Verify(x => x.Info($"Nothing to backup in {savePath}"));
     }
     
     [Theory, AutoMoqData]
