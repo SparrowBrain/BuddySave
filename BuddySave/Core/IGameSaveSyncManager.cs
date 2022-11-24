@@ -2,15 +2,9 @@
 
 namespace BuddySave.Core;
 
-public interface ICloudManager
+public interface IGameSaveSyncManager
 {
     void UploadSave(GameSave gameSave);
 
     void DownloadSave(GameSave gameSave);
-
-    bool LockExists(GameSave save);
-
-    Task CreateLock(GameSave save);
-
-    void DeleteLock(GameSave save);
 }

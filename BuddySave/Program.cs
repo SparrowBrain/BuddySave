@@ -16,11 +16,13 @@ namespace BuddySave
         static Program()
         {
             Logger = LogManager.GetLogger("BuddySave");
-            var backupDirectory = new BackupDirectoryProvider();
             var saveCopier = new SaveCopier();
-            var cloudManager = new CloudManager(backupDirectory, saveCopier, Logger);
+            var backupDirectoryProvider = new BackupDirectoryProvider();
+            var backupManager = new BackupManager(backupDirectoryProvider, saveCopier, Logger);
+            var gameSaveSyncManager = new GameSaveSyncManager(saveCopier, backupManager);
             var clientNotifier = new ClientNotifier();
-            SharedSaveOrchestrator = new SharedSaveOrchestrator(cloudManager, clientNotifier);
+            var lockManager = new LockManager();
+            SharedSaveOrchestrator = new SharedSaveOrchestrator(gameSaveSyncManager, lockManager, clientNotifier);
         }
 
         private static async Task Main()
