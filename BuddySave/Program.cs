@@ -4,35 +4,45 @@ using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.Notifications;
 using Newtonsoft.Json;
+using NLog;
 
 namespace BuddySave
 {
     internal class Program
     {
         private static readonly ISharedSaveOrchestrator SharedSaveOrchestrator;
+        private static readonly Logger Logger;
 
         static Program()
         {
-            var backupDirectoryProvider = new BackupDirectoryProvider();
+            Logger = LogManager.GetLogger("BuddySave");
+            var backupDirectory = new BackupDirectoryProvider();
             var saveCopier = new SaveCopier();
-            var backupManager = new BackupManager(backupDirectoryProvider, saveCopier);
-            var gameSaveSyncManager = new GameSaveSyncManager(saveCopier, backupManager);
-            var lockManager = new LockManager();
+            var cloudManager = new CloudManager(backupDirectory, saveCopier, Logger);
             var clientNotifier = new ClientNotifier();
-            SharedSaveOrchestrator = new SharedSaveOrchestrator(gameSaveSyncManager, lockManager, clientNotifier);
+            SharedSaveOrchestrator = new SharedSaveOrchestrator(cloudManager, clientNotifier);
         }
 
         private static async Task Main()
         {
+            Logger.Info("Start");
             Console.WriteLine("∞∞∞∞∞∞∞ Buddy Save ∞∞∞∞∞∞∞");
 
-            var config = await LoadConfiguration();
-            var gameSave = new GameSave(config.Game.SaveName, config.Game.SavePath, Path.Combine(config.CloudPath, config.Game.Name));
-            await Run(gameSave);
+            try
+            {
+                var config = await LoadConfiguration();
+                var gameSave = new GameSave(config.Game.SaveName, config.Game.SavePath, Path.Combine(config.CloudPath, config.Game.Name));
+                await Run(gameSave);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex);
+            }
 
             Console.WriteLine("Bye Buddy! ;)");
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
+            Logger.Info("Exit");
         }
 
         private static async Task Run(GameSave gameSave)
