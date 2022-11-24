@@ -27,8 +27,6 @@ public class SaveCopier : ISaveCopier
             var destinationFile = Path.Combine(destinationPath, fileName);
 
             File.Copy(file, destinationFile);
-
-            // TODO: check if file is a folder and copy files with recursion if it is
         }
     }
 
