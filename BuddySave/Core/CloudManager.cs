@@ -1,5 +1,6 @@
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
+using NLog;
 
 namespace BuddySave.Core;
 
@@ -7,11 +8,13 @@ public class CloudManager : ICloudManager
 {
     private readonly IBackupDirectoryProvider _backupDirectoryProvider;
     private readonly ISaveCopier _saveCopier;
+    private readonly ILogger _logger;
 
-    public CloudManager(IBackupDirectoryProvider backupDirectoryProvider, ISaveCopier saveCopier)
+    public CloudManager(IBackupDirectoryProvider backupDirectoryProvider, ISaveCopier saveCopier, ILogger logger)
     {
         _backupDirectoryProvider = backupDirectoryProvider;
         _saveCopier = saveCopier;
+        _logger = logger;
     }
 
     public void UploadSave(GameSave gameSave)
@@ -72,7 +75,7 @@ public class CloudManager : ICloudManager
         }
         catch
         {
-            // _logger.Info($"Nothing to backup in {sourcePath}");
+            _logger.Info($"Nothing to backup in {sourcePath}");
             return;
         }
 
