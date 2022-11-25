@@ -1,9 +1,11 @@
-﻿using BuddySave.Core.Models;
+﻿using System;
+using System.IO;
+using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.TestTools;
 using Xunit;
 
-namespace BuddySave.IntegrationTests;
+namespace BuddySave.IntegrationTests.FileManagement;
 
 public class BackupDirectoryProviderTests
 {
@@ -13,7 +15,7 @@ public class BackupDirectoryProviderTests
         BackupDirectoryProvider sut)
     {
         // Arrange
-        var expectedResult = $"SavesBackup_{saveName}_{SaveType.Cloud}";
+        var expectedResult = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"SavesBackup_{saveName}_{SaveType.Cloud}");
         
         // Act
         var result = sut.Get(saveName, SaveType.Cloud);
