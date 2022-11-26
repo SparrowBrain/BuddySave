@@ -4,7 +4,7 @@ namespace BuddySave.Core;
 
 internal interface ISharedSaveOrchestrator
 {
-    Task Load(GameSave gameSave);
+    Task Load(GameSave gameSave, Session session);
 
-    void Save(GameSave gameSave);
+    Task Save(GameSave gameSave, Session session);
 }

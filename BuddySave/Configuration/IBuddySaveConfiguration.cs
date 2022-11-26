@@ -1,10 +1,12 @@
-﻿namespace BuddySave.Configuration;
+﻿using BuddySave.Core.Models;
+
+namespace BuddySave.Configuration;
 
 public interface IBuddySaveConfiguration
 {
     public string CloudPath { get; }
 
-    public string UserName { get; }
+    public Session Session { get; }
     
-    public GameConfiguration Game { get; }
+    public GameSave GameSave { get; }
 }

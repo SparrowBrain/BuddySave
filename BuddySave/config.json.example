@@ -1,9 +1,11 @@
 ﻿{
-  "UserName": "buddy",
   "CloudPath": "C:\\GoogleDrive\\BuddySave",
-  "Game": {
-    "Name": "Valheim",
-    "SavePath": "C:\\Users\\<YourUser>\\AppData\\LocalLow\\IronGate\\Valheim\\worlds_local",
-    "SaveName": "ServerWorld"
+  "SessionConfiguration": {
+      "UserName": "buddy"
+    },
+  "GameSaveConfiguration": {
+    "GameName": "Valheim",
+    "SaveName": "ServerWorld",
+    "SavePath": "C:\\Users\\<YourUser>\\AppData\\LocalLow\\IronGate\\Valheim\\worlds_local"
   }
 }

@@ -16,31 +16,31 @@ public class GameSaveSyncManager : IGameSaveSyncManager
 
     public void UploadSave(GameSave gameSave)
     {
-        _saveCopier.ValidateSource(gameSave.Name, gameSave.LocalPath);
-        _backupManager.BackupFiles(gameSave.CloudPath, gameSave.Name, SaveType.Cloud);
+        _saveCopier.ValidateSource(gameSave.SaveName, gameSave.LocalPath);
+        _backupManager.BackupFiles(gameSave.CloudPath, gameSave.SaveName, SaveType.Cloud);
 
         try
         {
-            _saveCopier.CopyOverSaves(gameSave.Name, gameSave.LocalPath, gameSave.CloudPath);
+            _saveCopier.CopyOverSaves(gameSave.SaveName, gameSave.LocalPath, gameSave.CloudPath);
         }
         catch (Exception)
         {
-            _backupManager.RestoreBackup(gameSave.CloudPath, gameSave.Name, SaveType.Cloud);
+            _backupManager.RestoreBackup(gameSave.CloudPath, gameSave.SaveName, SaveType.Cloud);
         }
     }
 
     public void DownloadSave(GameSave gameSave)
     {
-        _saveCopier.ValidateSource(gameSave.Name, gameSave.CloudPath);
-        _backupManager.BackupFiles(gameSave.LocalPath, gameSave.Name, SaveType.Local);
+        _saveCopier.ValidateSource(gameSave.SaveName, gameSave.CloudPath);
+        _backupManager.BackupFiles(gameSave.LocalPath, gameSave.SaveName, SaveType.Local);
 
         try
         {
-            _saveCopier.CopyOverSaves(gameSave.Name, gameSave.CloudPath, gameSave.LocalPath);
+            _saveCopier.CopyOverSaves(gameSave.SaveName, gameSave.CloudPath, gameSave.LocalPath);
         }
         catch (Exception)
         {
-            _backupManager.RestoreBackup(gameSave.LocalPath, gameSave.Name, SaveType.Local);
+            _backupManager.RestoreBackup(gameSave.LocalPath, gameSave.SaveName, SaveType.Local);
         }
     }
 }

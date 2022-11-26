@@ -38,10 +38,60 @@ namespace BuddySave.IntegrationTests.Core
             // Assert
             Assert.True(result);
         }
+        
+        [Theory, AutoMoqData]
+        public async Task LockExistsForUserName_ReturnsFalse_WhenNoLockFile(
+            GameSave gameSave,
+            Session session,
+            LockManager sut)
+        {
+            // Act
+            var result = await sut.LockExists(gameSave, session);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Theory, AutoMoqData]
+        public async Task LockExistsForUserName_ReturnsFalse_WhenSaveIsLockedByAnotherUserName(
+            GameSave gameSave,
+            Session session,
+            LockManager sut)
+        {
+            // Arrange
+            using var lockFile = new TempLockFile();
+            await lockFile.Create("buddy");
+            gameSave.CloudPath = lockFile.CloudPath;
+            
+            // Act
+            var result = await sut.LockExists(gameSave, session);
+            
+            // Assert
+            Assert.False(result);
+        }
+
+        [Theory, AutoMoqData]
+        public async Task LockExistsForUserName_ReturnsTrue_WhenSaveIsLockedByCurrentUser(
+            GameSave gameSave,
+            Session session,
+            LockManager sut)
+        {
+            // Arrange
+            using var lockFile = new TempLockFile();
+            await lockFile.Create(session.UserName);
+            gameSave.CloudPath = lockFile.CloudPath;
+            
+            // Act
+            var result = await sut.LockExists(gameSave, session);
+            
+            // Assert
+            Assert.True(result);
+        }
 
         [Theory, AutoMoqData]
         public async Task CreateLock_ThrowsException_WhenLockExists(
             GameSave gameSave,
+            Session session,
             LockManager sut)
         {
             // Arrange
@@ -50,7 +100,7 @@ namespace BuddySave.IntegrationTests.Core
             gameSave.CloudPath = lockFile.CloudPath;
 
             // Act
-            var act = new Func<Task>(async () => await sut.CreateLock(gameSave));
+            var act = new Func<Task>(async () => await sut.CreateLock(gameSave, session));
 
             // Assert
             await Assert.ThrowsAnyAsync<Exception>(act);
@@ -59,6 +109,7 @@ namespace BuddySave.IntegrationTests.Core
         [Theory, AutoMoqData]
         public async Task CreateLock_CreatesLock_WhenLockDoesNotExist(
             GameSave gameSave,
+            Session session,
             LockManager sut)
         {
             // Arrange
@@ -66,32 +117,36 @@ namespace BuddySave.IntegrationTests.Core
             gameSave.CloudPath = lockFile.CloudPath;
 
             // Act
-            await sut.CreateLock(gameSave);
+            await sut.CreateLock(gameSave, session);
 
             // Assert
             Assert.True(File.Exists(lockFile.LockPath));
+            var expectedFileContent = (await File.ReadAllTextAsync(lockFile.LockPath)).Trim();
+            Assert.Equal(expectedFileContent, session.UserName);
         }
 
         [Theory, AutoMoqData]
         public async Task DeleteLock_DeletesLock_WhenLockExists(
             GameSave gameSave,
+            Session session,
             LockManager sut)
         {
             // Arrange
             using var lockFile = new TempLockFile();
-            await lockFile.Create();
+            await lockFile.Create(session.UserName);
             gameSave.CloudPath = lockFile.CloudPath;
 
             // Act
-            sut.DeleteLock(gameSave);
+            await sut.DeleteLock(gameSave, session);
 
             // Assert
             Assert.False(File.Exists(lockFile.LockPath));
         }
 
         [Theory, AutoMoqData]
-        public void DeleteLock_DoesNothing_WhenLockDoesNotExist(
+        public async Task DeleteLock_DoesNothing_WhenLockDoesNotExist(
             GameSave gameSave,
+            Session session,
             LockManager sut)
         {
             // Arrange
@@ -99,10 +154,29 @@ namespace BuddySave.IntegrationTests.Core
             gameSave.CloudPath = lockFile.CloudPath;
 
             // Act
-            sut.DeleteLock(gameSave);
+            await sut.DeleteLock(gameSave, session);
 
             // Assert
             Assert.False(File.Exists(lockFile.LockPath));
+        }
+
+        [Theory, AutoMoqData]
+        public async Task DeleteLock_ThrowsException_WhenLockIsCreatedByAnotherUser(
+            GameSave gameSave,
+            Session session,
+            LockManager sut)
+        {
+            // Arrange
+            using var lockFile = new TempLockFile();
+            await lockFile.Create("buddyUser");
+            gameSave.CloudPath = lockFile.CloudPath;
+
+            // Act
+            var act = new Func<Task>(async () => await sut.DeleteLock(gameSave, session));
+
+            // Assert
+            var exception = await Assert.ThrowsAsync<Exception>(act);
+            Assert.Equal("Cannot delete lock. Lock is owned by buddyUser.", exception.Message);
         }
 
         private class TempLockFile : IDisposable
@@ -125,6 +199,11 @@ namespace BuddySave.IntegrationTests.Core
             public async Task Create()
             {
                 await File.WriteAllTextAsync(LockPath, "This is a test lock");
+            }
+            
+            public async Task Create(string contents)
+            {
+                await File.WriteAllTextAsync(LockPath, contents);
             }
         }
     }

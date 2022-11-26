@@ -4,9 +4,11 @@ namespace BuddySave.Core;
 
 public interface ILockManager
 {
-    bool LockExists(GameSave save);
+    bool LockExists(GameSave gameSave);
+    
+    Task<bool> LockExists(GameSave gameSave, Session session);
 
-    Task CreateLock(GameSave save);
+    Task CreateLock(GameSave gameSave, Session session);
 
-    void DeleteLock(GameSave save);
+    Task DeleteLock(GameSave gameSave, Session session);
 }
