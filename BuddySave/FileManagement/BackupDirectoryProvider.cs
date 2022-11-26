@@ -8,6 +8,6 @@ public class BackupDirectoryProvider : IBackupDirectoryProvider
 
     public string Get(string saveName, SaveType saveType)
     {
-        return $"{BackupDirectoryPrefix}_{saveName}_{SaveType.Cloud}";
+        return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{BackupDirectoryPrefix}_{saveName}_{SaveType.Cloud}");
     }
 }

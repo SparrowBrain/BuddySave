@@ -73,7 +73,7 @@ namespace BuddySave
         private static async Task<BuddySaveConfiguration> LoadConfiguration()
         {
             Console.WriteLine("Reading configuration file...");
-            var configFile = await File.ReadAllTextAsync("config.json");
+            var configFile = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json"));
             if (string.IsNullOrWhiteSpace(configFile))
             {
                 throw new FileNotFoundException("Configuration file was not found", "config.json");
