@@ -2,7 +2,7 @@
 
 public interface ISaveCopier
 {
-    void ValidateSource(string name, string sourcePath);
+    void ValidateSource(string saveName, string sourcePath);
 
-    void CopyOverSaves(string name, string sourcePath, string destinationPath);
+    void CopyOverSaves(string saveName, string sourcePath, string destinationPath);
 }

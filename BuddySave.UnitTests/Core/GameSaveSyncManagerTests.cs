@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Globalization;
 using AutoFixture.Xunit2;
 using BuddySave.Core;
 using BuddySave.Core.Models;
@@ -38,7 +37,7 @@ namespace BuddySave.UnitTests.Core
             sut.UploadSave(save);
 
             // Assert
-            backupManagerMock.Verify(x => x.BackupFiles(save.CloudPath, save.Name, SaveType.Cloud), Times.Once);
+            backupManagerMock.Verify(x => x.BackupFiles(save.CloudPath, save.SaveName, SaveType.Cloud), Times.Once);
         }
 
         [Theory, AutoMoqData]
@@ -51,7 +50,7 @@ namespace BuddySave.UnitTests.Core
             sut.UploadSave(save);
 
             // Assert
-            saveCopierMock.Verify(x => x.CopyOverSaves(save.Name, save.LocalPath, save.CloudPath), Times.Once);
+            saveCopierMock.Verify(x => x.CopyOverSaves(save.SaveName, save.LocalPath, save.CloudPath), Times.Once);
         }
 
         [Theory, AutoMoqData]
@@ -68,7 +67,7 @@ namespace BuddySave.UnitTests.Core
             sut.UploadSave(save);
 
             // Assert
-            backupManagerMock.Verify(x => x.RestoreBackup(save.CloudPath, save.Name, SaveType.Cloud), Times.Once);
+            backupManagerMock.Verify(x => x.RestoreBackup(save.CloudPath, save.SaveName, SaveType.Cloud), Times.Once);
         }
 
         [Theory, AutoMoqData]
@@ -97,7 +96,7 @@ namespace BuddySave.UnitTests.Core
             sut.DownloadSave(save);
 
             // Assert
-            backupManagerMock.Verify(x => x.BackupFiles(save.LocalPath, save.Name, SaveType.Local), Times.Once);
+            backupManagerMock.Verify(x => x.BackupFiles(save.LocalPath, save.SaveName, SaveType.Local), Times.Once);
         }
 
         [Theory, AutoMoqData]
@@ -110,7 +109,7 @@ namespace BuddySave.UnitTests.Core
             sut.DownloadSave(save);
 
             // Assert
-            saveCopierMock.Verify(x => x.CopyOverSaves(save.Name, save.CloudPath, save.LocalPath), Times.Once());
+            saveCopierMock.Verify(x => x.CopyOverSaves(save.SaveName, save.CloudPath, save.LocalPath), Times.Once());
         }
 
         [Theory, AutoMoqData]
@@ -121,13 +120,13 @@ namespace BuddySave.UnitTests.Core
             GameSaveSyncManager sut)
         {
             // Arrange
-            saveCopierMock.Setup(x => x.CopyOverSaves(save.Name, save.CloudPath, save.LocalPath)).Throws(new Exception("Download error"));
+            saveCopierMock.Setup(x => x.CopyOverSaves(save.SaveName, save.CloudPath, save.LocalPath)).Throws(new Exception("Download error"));
 
             // Act
             sut.DownloadSave(save);
 
             // Assert
-            backupManagerMock.Verify(x => x.RestoreBackup(save.LocalPath, save.Name, SaveType.Local), Times.Once);
+            backupManagerMock.Verify(x => x.RestoreBackup(save.LocalPath, save.SaveName, SaveType.Local), Times.Once);
         }
     }
 }

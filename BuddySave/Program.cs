@@ -3,7 +3,6 @@ using BuddySave.Core;
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.Notifications;
-using Newtonsoft.Json;
 using NLog;
 
 namespace BuddySave
@@ -12,10 +11,12 @@ namespace BuddySave
     {
         private static readonly ISharedSaveOrchestrator SharedSaveOrchestrator;
         private static readonly Logger Logger;
+        private static readonly IConfigurationLoader ConfigurationLoader;
 
         static Program()
         {
             Logger = LogManager.GetLogger("BuddySave");
+            ConfigurationLoader = new ConfigurationLoader(Logger);
             var saveCopier = new SaveCopier();
             var backupDirectoryProvider = new BackupDirectoryProvider();
             var backupManager = new BackupManager(backupDirectoryProvider, saveCopier, Logger);
@@ -32,9 +33,8 @@ namespace BuddySave
 
             try
             {
-                var config = await LoadConfiguration();
-                var gameSave = new GameSave(config.Game.SaveName, config.Game.SavePath, Path.Combine(config.CloudPath, config.Game.Name));
-                await Run(gameSave);
+                var configuration = await ConfigurationLoader.Load();
+                await Run(configuration.GameSave, configuration.Session);
             }
             catch (Exception ex)
             {
@@ -47,7 +47,7 @@ namespace BuddySave
             Logger.Info("Exit");
         }
 
-        private static async Task Run(GameSave gameSave)
+        private static async Task Run(GameSave gameSave, Session session)
         {
             var input = string.Empty;
             while (!string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
@@ -57,35 +57,17 @@ namespace BuddySave
                 switch (input?.ToLowerInvariant())
                 {
                     case "load":
-                        await SharedSaveOrchestrator.Load(gameSave);
+                        await SharedSaveOrchestrator.Load(gameSave, session);
                         break;
 
                     case "save":
-                        SharedSaveOrchestrator.Save(gameSave);
+                        await SharedSaveOrchestrator.Save(gameSave, session);
                         break;
 
                     case "exit":
                         break;
                 }
             }
-        }
-
-        private static async Task<BuddySaveConfiguration> LoadConfiguration()
-        {
-            Console.WriteLine("Reading configuration file...");
-            var configFile = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json"));
-            if (string.IsNullOrWhiteSpace(configFile))
-            {
-                throw new FileNotFoundException("Configuration file was not found", "config.json");
-            }
-
-            var config = JsonConvert.DeserializeObject<BuddySaveConfiguration>(configFile);
-            if (config == null)
-            {
-                throw new FileLoadException("Could not load configuration", "config.json");
-            }
-
-            return config;
         }
     }
 }

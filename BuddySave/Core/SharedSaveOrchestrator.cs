@@ -9,14 +9,17 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
     private readonly ILockManager _lockManager;
     private readonly IClientNotifier _clientNotifier;
 
-    public SharedSaveOrchestrator(IGameSaveSyncManager gameSaveSyncManager, ILockManager lockManager, IClientNotifier clientNotifier)
+    public SharedSaveOrchestrator(
+        IGameSaveSyncManager gameSaveSyncManager, 
+        ILockManager lockManager, 
+        IClientNotifier clientNotifier)
     {
         _gameSaveSyncManager = gameSaveSyncManager;
         _lockManager = lockManager;
         _clientNotifier = clientNotifier;
     }
     
-    public async Task Load(GameSave gameSave)
+    public async Task Load(GameSave gameSave, Session session)
     {
         if (_lockManager.LockExists(gameSave))
         {
@@ -26,13 +29,13 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
 
         try
         {
-            await _lockManager.CreateLock(gameSave);
+            await _lockManager.CreateLock(gameSave, session);
             _gameSaveSyncManager.DownloadSave(gameSave);
         }
         catch(Exception)
         {
             _clientNotifier.Notify("Failed loading game save. Deleting game save lock...");
-            _lockManager.DeleteLock(gameSave);
+            await _lockManager.DeleteLock(gameSave, session);
             _clientNotifier.Notify("Game save lock released.");
             return;
         }
@@ -40,11 +43,11 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
         _clientNotifier.Notify("Game save is prepared! Enjoy Buddy :)");
     }
 
-    public void Save(GameSave gameSave)
+    public async Task Save(GameSave gameSave, Session session)
     {
-        if (!_lockManager.LockExists(gameSave))
+        if (!await _lockManager.LockExists(gameSave, session))
         {
-            _clientNotifier.Notify("There's no lock. Cannot save.");
+            _clientNotifier.Notify($"You don't have a lock on a {gameSave.GameName}, cannot save.");
             return;
         }
 
@@ -60,7 +63,7 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
         }
         finally
         {
-            _lockManager.DeleteLock(gameSave);
+            await _lockManager.DeleteLock(gameSave, session);
             _clientNotifier.Notify("Game save lock released.");
         }
     }
