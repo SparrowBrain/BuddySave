@@ -1,14 +1,17 @@
 ﻿using BuddySave.Core.Models;
+using NLog;
 
 namespace BuddySave.FileManagement;
 
 public class RollingBackups : IRollingBackups
 {
     private readonly IBackupDirectoryProvider _backupDirectoryProvider;
+    private readonly ILogger _logger;
 
-    public RollingBackups(IBackupDirectoryProvider backupDirectoryProvider)
+    public RollingBackups(IBackupDirectoryProvider backupDirectoryProvider, ILogger logger)
     {
         _backupDirectoryProvider = backupDirectoryProvider;
+        _logger = logger;
     }
 
     public int GetCount(string gameName, string saveName, SaveType saveType)
@@ -32,6 +35,7 @@ public class RollingBackups : IRollingBackups
     {
         var oldest = GetOldestPath(gameName, saveName, saveType);
         Directory.Delete(oldest, true);
+        _logger.Info($"Old save {oldest} deleted");
     }
 
     private string GetOldestPath(string gameName, string saveName, SaveType saveType)
