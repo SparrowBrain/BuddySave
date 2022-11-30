@@ -13,12 +13,12 @@ public class BackupDirectoryProvider : IBackupDirectoryProvider
         _dateTimeProvider = dateTimeProvider;
     }
 
-    public string GetNew(string gameName, string saveName, SaveType saveType)
+    public string GetTimestampedDirectory(string gameName, string saveName, SaveType saveType)
     {
-        return Path.Combine(GetRootGameSavePath(gameName, saveName, saveType), _dateTimeProvider.Now().ToString("yyyyMMdd_HHmmss"));
+        return Path.Combine(GetRootDirectory(gameName, saveName, saveType), _dateTimeProvider.Now().ToString("yyyyMMdd_HHmmss"));
     }
 
-    public string GetRootGameSavePath(string gameName, string saveName, SaveType saveType)
+    public string GetRootDirectory(string gameName, string saveName, SaveType saveType)
     {
         return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, BackupDirectoryPrefix, gameName, saveName, saveType.ToString());
     }

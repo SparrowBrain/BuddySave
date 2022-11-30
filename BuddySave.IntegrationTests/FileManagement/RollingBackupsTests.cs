@@ -23,7 +23,7 @@ namespace BuddySave.IntegrationTests.FileManagement
             // Arrange
             using var tempDir = new TempDir(saveName, true);
             backupDirectoryProviderMock
-                .Setup(x => x.GetRootGameSavePath(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
+                .Setup(x => x.GetRootDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
                 .Returns(tempDir.Path);
 
             foreach (var dir in saveDirectories)
@@ -50,7 +50,7 @@ namespace BuddySave.IntegrationTests.FileManagement
             // Arrange
             using var tempDir = new TempDir(saveName, false);
             backupDirectoryProviderMock
-                .Setup(x => x.GetRootGameSavePath(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
+                .Setup(x => x.GetRootDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
                 .Returns(tempDir.Path);
 
             // Act
@@ -62,7 +62,7 @@ namespace BuddySave.IntegrationTests.FileManagement
 
         [Theory]
         [AutoMoqData]
-        public void GetMostRecentPath_ReturnsMostRecentSave(
+        public void GetMostRecent_ReturnsMostRecentSave(
             string gameName,
             string saveName,
             SaveType saveType,
@@ -74,7 +74,7 @@ namespace BuddySave.IntegrationTests.FileManagement
             using var tempDir = new TempDir(saveName, true);
             var expectedDir = Path.Combine(tempDir.Path, "20220101_010102");
             backupDirectoryProviderMock
-                .Setup(x => x.GetRootGameSavePath(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
+                .Setup(x => x.GetRootDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
                 .Returns(tempDir.Path);
 
             foreach (var dir in saveDirectories)
@@ -83,7 +83,7 @@ namespace BuddySave.IntegrationTests.FileManagement
             }
 
             // Act
-            var result = sut.GetMostRecentPath(gameName, saveName, saveType);
+            var result = sut.GetMostRecent(gameName, saveName, saveType);
 
             // Assert
             Assert.Equal(expectedDir, result);
@@ -91,7 +91,7 @@ namespace BuddySave.IntegrationTests.FileManagement
 
         [Theory]
         [AutoMoqData]
-        public void DeleteOldestSave_DeletesOldestSave(
+        public void DeleteOldest_DeletesOldestSave(
             string gameName,
             string saveName,
             SaveType saveType,
@@ -103,7 +103,7 @@ namespace BuddySave.IntegrationTests.FileManagement
             using var tempDir = new TempDir(saveName, true);
             var deletedPath = Path.Combine(tempDir.Path, "20220101_010101");
             backupDirectoryProviderMock
-                .Setup(x => x.GetRootGameSavePath(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
+                .Setup(x => x.GetRootDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
                 .Returns(tempDir.Path);
 
             foreach (var dir in saveDirectories)
@@ -112,7 +112,7 @@ namespace BuddySave.IntegrationTests.FileManagement
             }
 
             // Act
-            sut.DeleteOldestSave(gameName, saveName, saveType);
+            sut.DeleteOldest(gameName, saveName, saveType);
 
             // Assert
             Assert.False(Directory.Exists(deletedPath));

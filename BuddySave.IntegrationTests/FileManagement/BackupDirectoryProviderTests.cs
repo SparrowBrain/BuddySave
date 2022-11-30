@@ -13,7 +13,7 @@ namespace BuddySave.IntegrationTests.FileManagement;
 public class BackupDirectoryProviderTests
 {
     [Theory, AutoMoqData]
-    public void GetNew_ReturnsTimestampedDirectory_When_Called(
+    public void GetTimestampedDirectory_ReturnsTimestampedDirectory_When_Called(
         string gameName,
         string saveName,
         SaveType saveType,
@@ -26,14 +26,14 @@ public class BackupDirectoryProviderTests
         var expectedResult = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SavesBackup", gameName, saveName, saveType.ToString(), $"{now:yyyyMMdd_HHmmss}");
 
         // Act
-        var result = sut.GetNew(gameName, saveName, SaveType.Cloud);
+        var result = sut.GetTimestampedDirectory(gameName, saveName, SaveType.Cloud);
 
         // Assert
         Assert.Equal(expectedResult, result);
     }
 
     [Theory, AutoMoqData]
-    public void GetRootGameSavePath_ReturnsRootGameSaveBackupsDirectory_When_Called(
+    public void GetRootDirectory_ReturnsRootGameSaveBackupsDirectory_When_Called(
         string gameName,
         string saveName,
         SaveType saveType,
@@ -43,7 +43,7 @@ public class BackupDirectoryProviderTests
         var expectedResult = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "SavesBackup", gameName, saveName, saveType.ToString());
 
         // Act
-        var result = sut.GetRootGameSavePath(gameName, saveName, saveType);
+        var result = sut.GetRootDirectory(gameName, saveName, saveType);
 
         // Assert
         Assert.Equal(expectedResult, result);

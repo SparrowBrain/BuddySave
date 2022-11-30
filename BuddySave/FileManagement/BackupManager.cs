@@ -31,13 +31,13 @@ public class BackupManager : IBackupManager
             return;
         }
 
-        _saveCopier.CopyOverSaves(saveName, sourcePath, _backupDirectoryProvider.GetNew(gameName, saveName, saveType));
+        _saveCopier.CopyOverSaves(saveName, sourcePath, _backupDirectoryProvider.GetTimestampedDirectory(gameName, saveName, saveType));
         RemoveOldRollingBackup(gameName, saveName, saveType);
     }
 
     public void RestoreBackup(string destinationPath, string gameName, string saveName, SaveType saveType)
     {
-        var backupDirectory = _rollingBackups.GetMostRecentPath(gameName, saveName, saveType);
+        var backupDirectory = _rollingBackups.GetMostRecent(gameName, saveName, saveType);
         _saveCopier.ValidateSource(saveName, backupDirectory);
         _saveCopier.CopyOverSaves(saveName, backupDirectory, destinationPath);
     }
@@ -46,7 +46,7 @@ public class BackupManager : IBackupManager
     {
         if (_rollingBackups.GetCount(gameName, saveName, saveType) > MaxNumberOfRollingBackups)
         {
-            _rollingBackups.DeleteOldestSave(gameName, saveName, saveType);
+            _rollingBackups.DeleteOldest(gameName, saveName, saveType);
         }
     }
 }

@@ -16,7 +16,7 @@ public class RollingBackups : IRollingBackups
 
     public int GetCount(string gameName, string saveName, SaveType saveType)
     {
-        var savePath = _backupDirectoryProvider.GetRootGameSavePath(gameName, saveName, saveType);
+        var savePath = _backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
         if (!Directory.Exists(savePath))
         {
             return 0;
@@ -25,13 +25,13 @@ public class RollingBackups : IRollingBackups
         return Directory.GetDirectories(savePath).Length;
     }
 
-    public string GetMostRecentPath(string gameName, string saveName, SaveType saveType)
+    public string GetMostRecent(string gameName, string saveName, SaveType saveType)
     {
-        var savePath = _backupDirectoryProvider.GetRootGameSavePath(gameName, saveName, saveType);
+        var savePath = _backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
         return Directory.GetDirectories(savePath).OrderByDescending(x => x).First();
     }
 
-    public void DeleteOldestSave(string gameName, string saveName, SaveType saveType)
+    public void DeleteOldest(string gameName, string saveName, SaveType saveType)
     {
         var oldest = GetOldestPath(gameName, saveName, saveType);
         Directory.Delete(oldest, true);
@@ -40,7 +40,7 @@ public class RollingBackups : IRollingBackups
 
     private string GetOldestPath(string gameName, string saveName, SaveType saveType)
     {
-        var savePath = _backupDirectoryProvider.GetRootGameSavePath(gameName, saveName, saveType);
+        var savePath = _backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
         return Directory.GetDirectories(savePath).OrderBy(x => x).First();
     }
 }

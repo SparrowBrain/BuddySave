@@ -65,7 +65,7 @@ public class BackupManagerTests
         BackupManager sut)
     {
         // Arrange
-        backupDirectoryProviderMock.Setup(x => x.GetNew(gameName, saveName, saveType)).Returns(backupDirectory);
+        backupDirectoryProviderMock.Setup(x => x.GetTimestampedDirectory(gameName, saveName, saveType)).Returns(backupDirectory);
 
         // Act
         sut.BackupFiles(savePath, gameName, saveName, saveType);
@@ -88,14 +88,14 @@ public class BackupManagerTests
         BackupManager sut)
     {
         // Arrange
-        backupDirectoryProviderMock.Setup(x => x.GetNew(gameName, saveName, saveType)).Returns(backupDirectory);
+        backupDirectoryProviderMock.Setup(x => x.GetTimestampedDirectory(gameName, saveName, saveType)).Returns(backupDirectory);
         rollingBackupsMock.Setup(x => x.GetCount(gameName, saveName, saveType)).Returns(11);
 
         // Act
         sut.BackupFiles(savePath, gameName, saveName, saveType);
 
         // Assert
-        rollingBackupsMock.Verify(x => x.DeleteOldestSave(gameName, saveName, saveType), Times.Once);
+        rollingBackupsMock.Verify(x => x.DeleteOldest(gameName, saveName, saveType), Times.Once);
     }
 
     [Theory, AutoMoqData]
@@ -109,7 +109,7 @@ public class BackupManagerTests
         BackupManager sut)
     {
         // Arrange
-        backupDirectoryProviderMock.Setup(x => x.GetNew(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>())).Returns(backupDirectory);
+        backupDirectoryProviderMock.Setup(x => x.GetTimestampedDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>())).Returns(backupDirectory);
         saveCopierMock.Setup(x => x.ValidateSource(It.IsAny<string>(), It.IsAny<string>())).Throws(new Exception());
 
         // Act
@@ -133,7 +133,7 @@ public class BackupManagerTests
         BackupManager sut)
     {
         // Arrange
-        rollingBackupsMock.Setup(x => x.GetMostRecentPath(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>())).Returns(mostRecentBackupDirectory);
+        rollingBackupsMock.Setup(x => x.GetMostRecent(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>())).Returns(mostRecentBackupDirectory);
 
         // Act
         sut.RestoreBackup(savePath, gameName, saveName, saveType);
