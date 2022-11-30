@@ -20,7 +20,7 @@ namespace BuddySave
             ConfigurationLoader = new ConfigurationLoader(Logger);
             var saveCopier = new SaveCopier();
             var backupDirectoryProvider = new BackupDirectoryProvider(new DateTimeProvider());
-            var rollingBackups = new RollingBackups(backupDirectoryProvider);
+            var rollingBackups = new RollingBackups(backupDirectoryProvider, Logger);
             var backupManager = new BackupManager(backupDirectoryProvider, rollingBackups, saveCopier, Logger);
             var gameSaveSyncManager = new GameSaveSyncManager(saveCopier, backupManager);
             var clientNotifier = new ClientNotifier();
