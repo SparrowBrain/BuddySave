@@ -5,15 +5,12 @@ namespace BuddySave.FileManagement;
 
 public class BackupManager : IBackupManager
 {
-    private const int MaxNumberOfRollingBackups = 10;
-    private readonly IBackupDirectoryProvider _backupDirectoryProvider;
     private readonly IRollingBackups _rollingBackups;
     private readonly ISaveCopier _saveCopier;
     private readonly ILogger _logger;
 
-    public BackupManager(IBackupDirectoryProvider backupDirectoryProvider, IRollingBackups rollingBackups, ISaveCopier saveCopier, ILogger logger)
+    public BackupManager(IRollingBackups rollingBackups, ISaveCopier saveCopier, ILogger logger)
     {
-        _backupDirectoryProvider = backupDirectoryProvider;
         _rollingBackups = rollingBackups;
         _saveCopier = saveCopier;
         _logger = logger;
@@ -31,8 +28,7 @@ public class BackupManager : IBackupManager
             return;
         }
 
-        _saveCopier.CopyOverSaves(saveName, sourcePath, _backupDirectoryProvider.GetTimestampedDirectory(gameName, saveName, saveType));
-        RemoveOldRollingBackup(gameName, saveName, saveType);
+        _rollingBackups.Add(sourcePath, gameName, saveName, saveType);
     }
 
     public void RestoreBackup(string destinationPath, string gameName, string saveName, SaveType saveType)
@@ -40,13 +36,5 @@ public class BackupManager : IBackupManager
         var backupDirectory = _rollingBackups.GetMostRecent(gameName, saveName, saveType);
         _saveCopier.ValidateSource(saveName, backupDirectory);
         _saveCopier.CopyOverSaves(saveName, backupDirectory, destinationPath);
-    }
-
-    private void RemoveOldRollingBackup(string gameName, string saveName, SaveType saveType)
-    {
-        if (_rollingBackups.GetCount(gameName, saveName, saveType) > MaxNumberOfRollingBackups)
-        {
-            _rollingBackups.DeleteOldest(gameName, saveName, saveType);
-        }
     }
 }

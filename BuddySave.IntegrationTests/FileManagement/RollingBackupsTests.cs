@@ -1,65 +1,17 @@
-﻿using AutoFixture.Xunit2;
+﻿using AutoFixture;
+using AutoFixture.Xunit2;
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.TestTools;
 using Moq;
 using System.IO;
+using System.Linq;
 using Xunit;
 
 namespace BuddySave.IntegrationTests.FileManagement
 {
     public class RollingBackupsTests
     {
-        [Theory]
-        [AutoMoqData]
-        public void GetCount_ReturnsNumberOfExistingBackups(
-            string gameName,
-            string saveName,
-            SaveType saveType,
-            string[] saveDirectories,
-            [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
-            RollingBackups sut)
-        {
-            // Arrange
-            using var tempDir = new TempDir(saveName, true);
-            backupDirectoryProviderMock
-                .Setup(x => x.GetRootDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
-                .Returns(tempDir.Path);
-
-            foreach (var dir in saveDirectories)
-            {
-                Directory.CreateDirectory(Path.Combine(tempDir.Path, dir));
-            }
-
-            // Act
-            var result = sut.GetCount(gameName, saveName, saveType);
-
-            // Assert
-            Assert.Equal(saveDirectories.Length, result);
-        }
-
-        [Theory]
-        [AutoMoqData]
-        public void GetCount_ReturnsZero_When_BackupDirectoryDoesNotExist(
-            string gameName,
-            string saveName,
-            SaveType saveType,
-            [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
-            RollingBackups sut)
-        {
-            // Arrange
-            using var tempDir = new TempDir(saveName, false);
-            backupDirectoryProviderMock
-                .Setup(x => x.GetRootDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
-                .Returns(tempDir.Path);
-
-            // Act
-            var result = sut.GetCount(gameName, saveName, saveType);
-
-            // Assert
-            Assert.Equal(0, result);
-        }
-
         [Theory]
         [AutoMoqData]
         public void GetMostRecent_ReturnsMostRecentSave(
@@ -90,29 +42,57 @@ namespace BuddySave.IntegrationTests.FileManagement
         }
 
         [Theory]
-        [AutoMoqData]
-        public void DeleteOldest_DeletesOldestSave(
+        [InlineAutoMoqData(SaveType.Cloud)]
+        [InlineAutoMoqData(SaveType.Local)]
+        public void Add_CopiesSavesToTimestampedDirectory(
+            SaveType saveType,
             string gameName,
             string saveName,
+            string timestampedDir,
+            string savePath,
+            [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
+            [Frozen] Mock<ISaveCopier> saveCopierMock,
+            RollingBackups sut)
+        {
+            // Arrange
+            backupDirectoryProviderMock.Setup(x => x.GetTimestampedDirectory(gameName, saveName, saveType))
+                .Returns(timestampedDir);
+
+            // Act
+            sut.Add(savePath, gameName, saveName, saveType);
+
+            // Assert
+            saveCopierMock.Verify(x => x.CopyOverSaves(saveName, savePath, timestampedDir), Times.Once);
+        }
+
+        [Theory]
+        [InlineAutoMoqData(SaveType.Cloud)]
+        [InlineAutoMoqData(SaveType.Local)]
+        public void Add_DeletesOldestRollingBackup_When_MoreThanTenRollingBackupsExist(
             SaveType saveType,
+            string gameName,
+            string saveName,
+            string savePath,
+            Fixture fixture,
             [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
             RollingBackups sut)
         {
             // Arrange
-            var saveDirectories = new[] { "20220101_010101", "20220101_010102" };
             using var tempDir = new TempDir(saveName, true);
-            var deletedPath = Path.Combine(tempDir.Path, "20220101_010101");
             backupDirectoryProviderMock
                 .Setup(x => x.GetRootDirectory(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>()))
                 .Returns(tempDir.Path);
 
-            foreach (var dir in saveDirectories)
+            var backups = fixture.CreateMany<string>(11);
+            foreach (var backup in backups)
             {
-                Directory.CreateDirectory(Path.Combine(tempDir.Path, dir));
+                Directory.CreateDirectory(Path.Combine(tempDir.Path, backup));
             }
 
+            var deletedPath = Path.Combine(tempDir.Path, backups.OrderBy(x => x).First());
+
             // Act
-            sut.DeleteOldest(gameName, saveName, saveType);
+            sut.Add(savePath, gameName, saveName, saveType);
 
             // Assert
             Assert.False(Directory.Exists(deletedPath));

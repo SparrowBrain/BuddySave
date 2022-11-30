@@ -5,16 +5,41 @@ namespace BuddySave.FileManagement;
 
 public class RollingBackups : IRollingBackups
 {
-    private readonly IBackupDirectoryProvider _backupDirectoryProvider;
+    private const int MaxNumberOfRollingBackups = 10;
     private readonly ILogger _logger;
+    private readonly IBackupDirectoryProvider _backupDirectoryProvider;
+    private readonly ISaveCopier _saveCopier;
 
-    public RollingBackups(IBackupDirectoryProvider backupDirectoryProvider, ILogger logger)
+    public RollingBackups(ILogger logger, IBackupDirectoryProvider backupDirectoryProvider, ISaveCopier saveCopier)
     {
-        _backupDirectoryProvider = backupDirectoryProvider;
         _logger = logger;
+        _backupDirectoryProvider = backupDirectoryProvider;
+        _saveCopier = saveCopier;
     }
 
-    public int GetCount(string gameName, string saveName, SaveType saveType)
+    public string GetMostRecent(string gameName, string saveName, SaveType saveType)
+    {
+        var savePath = _backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
+        return Directory.GetDirectories(savePath).OrderByDescending(x => x).First();
+    }
+
+    public void Add(string sourcePath, string gameName, string saveName, SaveType saveType)
+    {
+        var backupDir = _backupDirectoryProvider.GetTimestampedDirectory(gameName, saveName, saveType);
+        _saveCopier.CopyOverSaves(saveName, sourcePath, backupDir);
+
+        RemoveOldRollingBackup(gameName, saveName, saveType);
+    }
+
+    private void RemoveOldRollingBackup(string gameName, string saveName, SaveType saveType)
+    {
+        if (GetCount(gameName, saveName, saveType) > MaxNumberOfRollingBackups)
+        {
+            DeleteOldest(gameName, saveName, saveType);
+        }
+    }
+
+    private int GetCount(string gameName, string saveName, SaveType saveType)
     {
         var savePath = _backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
         if (!Directory.Exists(savePath))
@@ -25,13 +50,7 @@ public class RollingBackups : IRollingBackups
         return Directory.GetDirectories(savePath).Length;
     }
 
-    public string GetMostRecent(string gameName, string saveName, SaveType saveType)
-    {
-        var savePath = _backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
-        return Directory.GetDirectories(savePath).OrderByDescending(x => x).First();
-    }
-
-    public void DeleteOldest(string gameName, string saveName, SaveType saveType)
+    private void DeleteOldest(string gameName, string saveName, SaveType saveType)
     {
         var oldest = GetOldestPath(gameName, saveName, saveType);
         Directory.Delete(oldest, true);

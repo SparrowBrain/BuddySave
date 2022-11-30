@@ -59,43 +59,14 @@ public class BackupManagerTests
         string gameName,
         string saveName,
         string savePath,
-        string backupDirectory,
-        [Frozen] Mock<ISaveCopier> saveCopierMock,
-        [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
-        BackupManager sut)
-    {
-        // Arrange
-        backupDirectoryProviderMock.Setup(x => x.GetTimestampedDirectory(gameName, saveName, saveType)).Returns(backupDirectory);
-
-        // Act
-        sut.BackupFiles(savePath, gameName, saveName, saveType);
-
-        // Assert
-        saveCopierMock.Verify(x => x.CopyOverSaves(saveName, savePath, backupDirectory), Times.Once);
-    }
-
-    [Theory]
-    [InlineAutoMoqData(SaveType.Cloud)]
-    [InlineAutoMoqData(SaveType.Local)]
-    public void BackupFiles_DeletesOldestRollingBackup_When_MoreThanTenRollingBackupsExist(
-        SaveType saveType,
-        string gameName,
-        string saveName,
-        string savePath,
-        string backupDirectory,
-        [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
         [Frozen] Mock<IRollingBackups> rollingBackupsMock,
         BackupManager sut)
     {
-        // Arrange
-        backupDirectoryProviderMock.Setup(x => x.GetTimestampedDirectory(gameName, saveName, saveType)).Returns(backupDirectory);
-        rollingBackupsMock.Setup(x => x.GetCount(gameName, saveName, saveType)).Returns(11);
-
         // Act
         sut.BackupFiles(savePath, gameName, saveName, saveType);
 
         // Assert
-        rollingBackupsMock.Verify(x => x.DeleteOldest(gameName, saveName, saveType), Times.Once);
+        rollingBackupsMock.Verify(x => x.Add(savePath, gameName, saveName, saveType), Times.Once);
     }
 
     [Theory, AutoMoqData]
