@@ -15,7 +15,10 @@
 
         public void Dispose()
         {
-            Directory.Delete(Path, true);
+            if (Directory.Exists(Path))
+            {
+                Directory.Delete(Path, true);
+            }
         }
 
         public void Create()
