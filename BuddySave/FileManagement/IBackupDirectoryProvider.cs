@@ -4,5 +4,7 @@ namespace BuddySave.FileManagement;
 
 public interface IBackupDirectoryProvider
 {
-    string Get(string saveName, SaveType saveType);
+    string GetNew(string gameName, string saveName, SaveType saveType);
+
+    string GetRootGameSavePath(string gameName, string saveName, SaveType saveType);
 }

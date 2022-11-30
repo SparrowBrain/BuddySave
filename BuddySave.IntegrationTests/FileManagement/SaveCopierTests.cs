@@ -1,8 +1,8 @@
-﻿using System;
+﻿using BuddySave.FileManagement;
+using BuddySave.TestTools;
+using System;
 using System.IO;
 using System.Threading.Tasks;
-using BuddySave.FileManagement;
-using BuddySave.TestTools;
 using Xunit;
 
 namespace BuddySave.IntegrationTests.FileManagement
@@ -150,43 +150,16 @@ namespace BuddySave.IntegrationTests.FileManagement
             Assert.ThrowsAny<Exception>(act);
         }
 
-        private static TempSaveDir PrepareSaveDirectory(string dirName, bool createDirectory)
+        private static TempDir PrepareSaveDirectory(string dirName, bool createDirectory)
         {
-            var save = new TempSaveDir(dirName);
-
-            if (createDirectory)
-            {
-                save.Create();
-            }
-
-            return save;
+            return new TempDir(dirName, createDirectory);
         }
 
-        private static async Task<string> PrepareFile(string file, TempSaveDir save)
+        private static async Task<string> PrepareFile(string file, TempDir save)
         {
             var filePath = Path.Combine(save.Path, file);
             await File.WriteAllTextAsync(filePath, "Test");
             return filePath;
-        }
-
-        private class TempSaveDir : IDisposable
-        {
-            public TempSaveDir(string dirName)
-            {
-                Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), dirName);
-            }
-
-            public string Path { get; }
-
-            public void Dispose()
-            {
-                Directory.Delete(Path, true);
-            }
-
-            public void Create()
-            {
-                Directory.CreateDirectory(Path);
-            }
         }
     }
 }

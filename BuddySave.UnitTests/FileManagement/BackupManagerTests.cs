@@ -1,10 +1,10 @@
-﻿using System;
-using AutoFixture.Xunit2;
+﻿using AutoFixture.Xunit2;
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.TestTools;
 using Moq;
 using NLog;
+using System;
 using Xunit;
 
 namespace BuddySave.UnitTests.FileManagement;
@@ -12,7 +12,8 @@ namespace BuddySave.UnitTests.FileManagement;
 public class BackupManagerTests
 {
     [Theory, AutoMoqData]
-    public void BackupFile_DoesNothing_When_SaveDoesNotExist(
+    public void BackupFiles_DoesNothing_When_SaveDoesNotExist(
+        string gameName,
         string saveName,
         string savePath,
         SaveType saveType,
@@ -24,15 +25,16 @@ public class BackupManagerTests
         saveCopierMock.Setup(x => x.ValidateSource(It.IsAny<string>(), It.IsAny<string>())).Throws(new Exception());
 
         // Act
-        sut.BackupFiles(savePath, saveName, saveType);
+        sut.BackupFiles(savePath, gameName, saveName, saveType);
 
         // Assert
         saveCopierMock.Verify(x => x.CopyOverSaves(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         loggerMock.Verify(x => x.Info($"Nothing to backup in {savePath}"));
     }
-    
+
     [Theory, AutoMoqData]
-    public void BackupFile_DoesNotThrowException_When_SaveDoesNotExist(
+    public void BackupFiles_DoesNotThrowException_When_SaveDoesNotExist(
+        string gameName,
         string saveName,
         string savePath,
         SaveType saveType,
@@ -43,8 +45,8 @@ public class BackupManagerTests
         saveCopierMock.Setup(x => x.ValidateSource(saveName, savePath)).Throws(new Exception());
 
         // Act
-        var result = Record.Exception(() => sut.BackupFiles(savePath, saveName, saveType));
-        
+        var result = Record.Exception(() => sut.BackupFiles(savePath, gameName, saveName, saveType));
+
         // Assert
         Assert.Null(result);
     }
@@ -52,8 +54,9 @@ public class BackupManagerTests
     [Theory]
     [InlineAutoMoqData(SaveType.Cloud)]
     [InlineAutoMoqData(SaveType.Local)]
-    public void BackupFile_BackupSaves_When_SavesExist(
+    public void BackupFiles_BackupSaves_When_SavesExist(
         SaveType saveType,
+        string gameName,
         string saveName,
         string savePath,
         string backupDirectory,
@@ -62,54 +65,80 @@ public class BackupManagerTests
         BackupManager sut)
     {
         // Arrange
-        backupDirectoryProviderMock.Setup(x => x.Get(saveName, saveType)).Returns(backupDirectory);
-        
+        backupDirectoryProviderMock.Setup(x => x.GetNew(gameName, saveName, saveType)).Returns(backupDirectory);
+
         // Act
-        sut.BackupFiles(savePath, saveName, saveType);
+        sut.BackupFiles(savePath, gameName, saveName, saveType);
 
         // Assert
         saveCopierMock.Verify(x => x.CopyOverSaves(saveName, savePath, backupDirectory), Times.Once);
     }
-    
-    [Theory, AutoMoqData]
-    public void RestoreBackup_Throws_When_SaveDoesNotExist(
-        string backupDirectory,
-        string saveName,
-        SaveType saveType,
-        [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
-        [Frozen] Mock<ISaveCopier> saveCopierMock,
-        BackupManager sut)
-    {
-        // Arrange
-        backupDirectoryProviderMock.Setup(x => x.Get(It.IsAny<string>(), It.IsAny<SaveType>())).Returns(backupDirectory);
-        saveCopierMock.Setup(x => x.ValidateSource(It.IsAny<string>(), It.IsAny<string>())).Throws(new Exception());
 
-        // Act
-        var act = new Action(() => sut.RestoreBackup(backupDirectory, saveName, saveType));
-        
-        // Assert
-        Assert.ThrowsAny<Exception>(act);
-    }
-    
     [Theory]
     [InlineAutoMoqData(SaveType.Cloud)]
     [InlineAutoMoqData(SaveType.Local)]
-    public void RestoreBackup_RestoresSaves_When_BackupSavesExist(
+    public void BackupFiles_DeletesOldestRollingBackup_When_MoreThanTenRollingBackupsExist(
         SaveType saveType,
+        string gameName,
         string saveName,
         string savePath,
         string backupDirectory,
-        [Frozen] Mock<ISaveCopier> saveCopierMock,
         [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
+        [Frozen] Mock<IRollingBackups> rollingBackupsMock,
         BackupManager sut)
     {
         // Arrange
-        backupDirectoryProviderMock.Setup(x => x.Get(It.IsAny<string>(), It.IsAny<SaveType>())).Returns(backupDirectory);
-        
+        backupDirectoryProviderMock.Setup(x => x.GetNew(gameName, saveName, saveType)).Returns(backupDirectory);
+        rollingBackupsMock.Setup(x => x.GetCount(gameName, saveName, saveType)).Returns(11);
+
         // Act
-        sut.RestoreBackup(savePath, saveName, saveType);
+        sut.BackupFiles(savePath, gameName, saveName, saveType);
 
         // Assert
-        saveCopierMock.Verify(x => x.CopyOverSaves(saveName, backupDirectory, savePath));
+        rollingBackupsMock.Verify(x => x.DeleteOldestSave(gameName, saveName, saveType), Times.Once);
+    }
+
+    [Theory, AutoMoqData]
+    public void RestoreBackup_Throws_When_SaveDoesNotExist(
+        string backupDirectory,
+        string gameName,
+        string saveName,
+        SaveType saveType,
+        [Frozen] Mock<IBackupDirectoryProvider> backupDirectoryProviderMock,
+        [Frozen] Mock<ISaveCopier> saveCopierMock,
+        BackupManager sut)
+    {
+        // Arrange
+        backupDirectoryProviderMock.Setup(x => x.GetNew(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>())).Returns(backupDirectory);
+        saveCopierMock.Setup(x => x.ValidateSource(It.IsAny<string>(), It.IsAny<string>())).Throws(new Exception());
+
+        // Act
+        var act = new Action(() => sut.RestoreBackup(backupDirectory, gameName, saveName, saveType));
+
+        // Assert
+        Assert.ThrowsAny<Exception>(act);
+    }
+
+    [Theory]
+    [InlineAutoMoqData(SaveType.Cloud)]
+    [InlineAutoMoqData(SaveType.Local)]
+    public void RestoreBackup_RestoresMostRecentSave_When_BackupSavesExist(
+        SaveType saveType,
+        string gameName,
+        string saveName,
+        string savePath,
+        string mostRecentBackupDirectory,
+        [Frozen] Mock<ISaveCopier> saveCopierMock,
+        [Frozen] Mock<IRollingBackups> rollingBackupsMock,
+        BackupManager sut)
+    {
+        // Arrange
+        rollingBackupsMock.Setup(x => x.GetMostRecentPath(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<SaveType>())).Returns(mostRecentBackupDirectory);
+
+        // Act
+        sut.RestoreBackup(savePath, gameName, saveName, saveType);
+
+        // Assert
+        saveCopierMock.Verify(x => x.CopyOverSaves(saveName, mostRecentBackupDirectory, savePath));
     }
 }
