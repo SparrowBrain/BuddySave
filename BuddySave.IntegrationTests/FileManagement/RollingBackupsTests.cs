@@ -1,11 +1,11 @@
-﻿using AutoFixture;
+﻿using System.IO;
+using System.Linq;
+using AutoFixture;
 using AutoFixture.Xunit2;
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.TestTools;
 using Moq;
-using System.IO;
-using System.Linq;
 using Xunit;
 
 namespace BuddySave.IntegrationTests.FileManagement

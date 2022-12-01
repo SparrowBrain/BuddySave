@@ -1,8 +1,8 @@
-﻿using BuddySave.FileManagement;
-using BuddySave.TestTools;
-using System;
+﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using BuddySave.FileManagement;
+using BuddySave.TestTools;
 using Xunit;
 
 namespace BuddySave.IntegrationTests.FileManagement
