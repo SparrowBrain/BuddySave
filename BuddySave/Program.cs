@@ -3,6 +3,7 @@ using BuddySave.Core;
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.Notifications;
+using BuddySave.System;
 using NLog;
 
 namespace BuddySave
@@ -18,8 +19,9 @@ namespace BuddySave
             Logger = LogManager.GetLogger("BuddySave");
             ConfigurationLoader = new ConfigurationLoader(Logger);
             var saveCopier = new SaveCopier();
-            var backupDirectoryProvider = new BackupDirectoryProvider();
-            var backupManager = new BackupManager(backupDirectoryProvider, saveCopier, Logger);
+            var backupDirectoryProvider = new BackupDirectoryProvider(new DateTimeProvider());
+            var rollingBackups = new RollingBackups(Logger, backupDirectoryProvider, saveCopier);
+            var backupManager = new BackupManager(rollingBackups, saveCopier, Logger);
             var gameSaveSyncManager = new GameSaveSyncManager(saveCopier, backupManager);
             var clientNotifier = new ClientNotifier();
             var lockManager = new LockManager();

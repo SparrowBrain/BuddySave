@@ -17,7 +17,7 @@ public class GameSaveSyncManager : IGameSaveSyncManager
     public void UploadSave(GameSave gameSave)
     {
         _saveCopier.ValidateSource(gameSave.SaveName, gameSave.LocalPath);
-        _backupManager.BackupFiles(gameSave.CloudPath, gameSave.SaveName, SaveType.Cloud);
+        _backupManager.BackupFiles(gameSave.CloudPath, gameSave.GameName, gameSave.SaveName, SaveType.Cloud);
 
         try
         {
@@ -25,14 +25,14 @@ public class GameSaveSyncManager : IGameSaveSyncManager
         }
         catch (Exception)
         {
-            _backupManager.RestoreBackup(gameSave.CloudPath, gameSave.SaveName, SaveType.Cloud);
+            _backupManager.RestoreBackup(gameSave.CloudPath, gameSave.GameName, gameSave.SaveName, SaveType.Cloud);
         }
     }
 
     public void DownloadSave(GameSave gameSave)
     {
         _saveCopier.ValidateSource(gameSave.SaveName, gameSave.CloudPath);
-        _backupManager.BackupFiles(gameSave.LocalPath, gameSave.SaveName, SaveType.Local);
+        _backupManager.BackupFiles(gameSave.LocalPath, gameSave.GameName, gameSave.SaveName, SaveType.Local);
 
         try
         {
@@ -40,7 +40,7 @@ public class GameSaveSyncManager : IGameSaveSyncManager
         }
         catch (Exception)
         {
-            _backupManager.RestoreBackup(gameSave.LocalPath, gameSave.SaveName, SaveType.Local);
+            _backupManager.RestoreBackup(gameSave.LocalPath, gameSave.GameName, gameSave.SaveName, SaveType.Local);
         }
     }
 }
