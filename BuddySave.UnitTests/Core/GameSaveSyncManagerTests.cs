@@ -5,6 +5,7 @@ using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.TestTools;
 using Moq;
+using NLog;
 using Xunit;
 
 namespace BuddySave.UnitTests.Core
@@ -71,6 +72,24 @@ namespace BuddySave.UnitTests.Core
         }
 
         [Theory, AutoMoqData]
+        public void UploadSave_LogsError_When_UploadFails(
+            [Frozen] Mock<ISaveCopier> saveCopierMock,
+            [Frozen] Mock<ILogger> loggerMock,
+            GameSave save,
+            Exception exception,
+            GameSaveSyncManager sut)
+        {
+            // Arrange
+            saveCopierMock.Setup(x => x.CopyOverSaves(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Throws(exception);
+
+            // Act
+            sut.UploadSave(save);
+
+            // Assert
+            loggerMock.Verify(x => x.Error(exception, "Upload failed."));
+        }
+
+        [Theory, AutoMoqData]
         public void DownloadSave_Throws_When_SourceValidationFails(
            [Frozen] Mock<ISaveCopier> saveCopierMock,
            GameSave save,
@@ -127,6 +146,24 @@ namespace BuddySave.UnitTests.Core
 
             // Assert
             backupManagerMock.Verify(x => x.RestoreBackup(save.LocalPath, save.GameName, save.SaveName, SaveType.Local), Times.Once);
+        }
+
+        [Theory, AutoMoqData]
+        public void DownloadSave_LogsError_When_DownloadFails(
+            [Frozen] Mock<ISaveCopier> saveCopierMock,
+            [Frozen] Mock<ILogger> loggerMock,
+            GameSave save,
+            Exception exception,
+            GameSaveSyncManager sut)
+        {
+            // Arrange
+            saveCopierMock.Setup(x => x.CopyOverSaves(save.SaveName, save.CloudPath, save.LocalPath)).Throws(exception);
+
+            // Act
+            sut.DownloadSave(save);
+
+            // Assert
+            loggerMock.Verify(x => x.Error(exception, "Download failed."));
         }
     }
 }

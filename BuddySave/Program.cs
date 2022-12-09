@@ -22,10 +22,10 @@ namespace BuddySave
             var backupDirectoryProvider = new BackupDirectoryProvider(new DateTimeProvider());
             var rollingBackups = new RollingBackups(Logger, backupDirectoryProvider, saveCopier);
             var backupManager = new BackupManager(rollingBackups, saveCopier, Logger);
-            var gameSaveSyncManager = new GameSaveSyncManager(saveCopier, backupManager);
+            var gameSaveSyncManager = new GameSaveSyncManager(Logger, saveCopier, backupManager);
             var clientNotifier = new ClientNotifier();
             var lockManager = new LockManager();
-            SharedSaveOrchestrator = new SharedSaveOrchestrator(gameSaveSyncManager, lockManager, clientNotifier);
+            SharedSaveOrchestrator = new SharedSaveOrchestrator(Logger, gameSaveSyncManager, lockManager, clientNotifier);
         }
 
         private static async Task Main()

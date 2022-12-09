@@ -1,15 +1,18 @@
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
+using NLog;
 
 namespace BuddySave.Core;
 
 public class GameSaveSyncManager : IGameSaveSyncManager
 {
+    private readonly ILogger _logger;
     private readonly ISaveCopier _saveCopier;
     private readonly IBackupManager _backupManager;
 
-    public GameSaveSyncManager(ISaveCopier saveCopier, IBackupManager backupManager)
+    public GameSaveSyncManager(ILogger logger, ISaveCopier saveCopier, IBackupManager backupManager)
     {
+        _logger = logger;
         _saveCopier = saveCopier;
         _backupManager = backupManager;
     }
@@ -23,8 +26,9 @@ public class GameSaveSyncManager : IGameSaveSyncManager
         {
             _saveCopier.CopyOverSaves(gameSave.SaveName, gameSave.LocalPath, gameSave.CloudPath);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Error(ex, "Upload failed.");
             _backupManager.RestoreBackup(gameSave.CloudPath, gameSave.GameName, gameSave.SaveName, SaveType.Cloud);
         }
     }
@@ -38,8 +42,9 @@ public class GameSaveSyncManager : IGameSaveSyncManager
         {
             _saveCopier.CopyOverSaves(gameSave.SaveName, gameSave.CloudPath, gameSave.LocalPath);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Error(ex, "Download failed.");
             _backupManager.RestoreBackup(gameSave.LocalPath, gameSave.GameName, gameSave.SaveName, SaveType.Local);
         }
     }

@@ -1,24 +1,28 @@
 ﻿using BuddySave.Core.Models;
 using BuddySave.Notifications;
+using NLog;
 
 namespace BuddySave.Core;
 
 public class SharedSaveOrchestrator : ISharedSaveOrchestrator
 {
+    private readonly ILogger _logger;
     private readonly IGameSaveSyncManager _gameSaveSyncManager;
     private readonly ILockManager _lockManager;
     private readonly IClientNotifier _clientNotifier;
 
     public SharedSaveOrchestrator(
-        IGameSaveSyncManager gameSaveSyncManager, 
-        ILockManager lockManager, 
+        ILogger logger,
+        IGameSaveSyncManager gameSaveSyncManager,
+        ILockManager lockManager,
         IClientNotifier clientNotifier)
     {
+        _logger = logger;
         _gameSaveSyncManager = gameSaveSyncManager;
         _lockManager = lockManager;
         _clientNotifier = clientNotifier;
     }
-    
+
     public async Task Load(GameSave gameSave, Session session)
     {
         if (_lockManager.LockExists(gameSave))
@@ -32,14 +36,15 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
             await _lockManager.CreateLock(gameSave, session);
             _gameSaveSyncManager.DownloadSave(gameSave);
         }
-        catch(Exception)
+        catch (Exception ex)
         {
+            _logger.Error(ex, "Error while loading.");
             _clientNotifier.Notify("Failed loading game save. Deleting game save lock...");
             await _lockManager.DeleteLock(gameSave, session);
             _clientNotifier.Notify("Game save lock released.");
             return;
         }
-        
+
         _clientNotifier.Notify("Game save is prepared! Enjoy Buddy :)");
     }
 
@@ -57,8 +62,9 @@ public class SharedSaveOrchestrator : ISharedSaveOrchestrator
             _gameSaveSyncManager.UploadSave(gameSave);
             _clientNotifier.Notify("Game save uploaded.");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.Error(ex, "Error while saving.");
             _clientNotifier.Notify("Upload failed.");
         }
         finally
