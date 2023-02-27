@@ -9,4 +9,6 @@ public class BuddySaveConfiguration : IBuddySaveConfiguration
     public Session Session { get; set; }
 
     public GameSave GameSave { get; set; }
+
+    public string ServerPath { get; set; }
 }

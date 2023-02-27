@@ -1,5 +1,6 @@
 ﻿{
   "CloudPath": "C:\\GoogleDrive\\BuddySave",
+  "ServerPath": "C:\\Program Files\\Steam\\steamapps\\common\Valheim dedicated server\\start_headless_server.bat",
   "Session": {
       "UserName": "buddy"
     },
