@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using BuddySave.Configuration;
+﻿using BuddySave.Configuration;
 using BuddySave.Core;
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
@@ -12,6 +11,7 @@ namespace BuddySave
     internal class Program
     {
         private static readonly ISharedSaveOrchestrator SharedSaveOrchestrator;
+        private static readonly IGamingSession GamingSession;
         private static readonly Logger Logger;
         private static readonly IConfigurationLoader ConfigurationLoader;
 
@@ -26,7 +26,9 @@ namespace BuddySave
             var gameSaveSyncManager = new GameSaveSyncManager(Logger, saveCopier, backupManager);
             var clientNotifier = new ClientNotifier(Logger);
             var lockManager = new LockManager();
+            var processProvider = new ProcessProvider();
             SharedSaveOrchestrator = new SharedSaveOrchestrator(Logger, gameSaveSyncManager, lockManager, clientNotifier);
+            GamingSession = new GamingSession(Logger, SharedSaveOrchestrator, processProvider);
         }
 
         private static async Task Main()
@@ -61,14 +63,7 @@ namespace BuddySave
                 switch (input?.ToLowerInvariant())
                 {
                     case "run":
-                        if (string.IsNullOrWhiteSpace(serverPath))
-                        {
-                            throw new Exception("No server path provided. Cannot start a gaming session.");
-                        }
-
-                        await SharedSaveOrchestrator.Load(gameSave, session);
-                        await RunServer(serverPath);
-                        await SharedSaveOrchestrator.Save(gameSave, session);
+                        await GamingSession.Run(gameSave, session, serverPath);
                         break;
 
                     case "load":
@@ -84,22 +79,6 @@ namespace BuddySave
                         break;
                 }
             }
-        }
-
-        private static async Task RunServer(string serverPath)
-        {
-            var workingDirectory = Path.GetDirectoryName(serverPath);
-            var startInfo = new ProcessStartInfo()
-            {
-                FileName = serverPath,
-                WorkingDirectory = workingDirectory,
-                UseShellExecute = true
-            };
-
-            var process = Process.Start(startInfo);
-            Logger.Info(@$"Server started, waiting for exit: ""{serverPath}""");
-            await process.WaitForExitAsync();
-            Logger.Info("Server exited");
         }
     }
 }

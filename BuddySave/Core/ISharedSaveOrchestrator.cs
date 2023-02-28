@@ -2,7 +2,7 @@
 
 namespace BuddySave.Core;
 
-internal interface ISharedSaveOrchestrator
+public interface ISharedSaveOrchestrator
 {
     Task Load(GameSave gameSave, Session session);
 
