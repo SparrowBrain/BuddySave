@@ -18,30 +18,31 @@ public class GamingSession : IGamingSession
         _processProvider = processProvider;
     }
 
-    public async Task Run(GameSave gameSave, Session session, string serverPath)
+    public async Task Run(GameSave gameSave, Session session, ServerParameters serverParameters)
     {
-        if (string.IsNullOrWhiteSpace(serverPath))
+        if (string.IsNullOrWhiteSpace(serverParameters.Path))
         {
             throw new ArgumentException("No server path provided. Cannot start a gaming session.");
         }
 
         await _sharedSaveOrchestrator.Load(gameSave, session);
-        await RunServer(serverPath);
+        await RunServer(serverParameters);
         await _sharedSaveOrchestrator.Save(gameSave, session);
     }
 
-    private async Task RunServer(string serverPath)
+    private async Task RunServer(ServerParameters serverParameters)
     {
-        var workingDirectory = Path.GetDirectoryName(serverPath);
+        var workingDirectory = Path.GetDirectoryName(serverParameters.Path);
         var startInfo = new ProcessStartInfo()
         {
-            FileName = serverPath,
+            FileName = serverParameters.Path,
+            Arguments = serverParameters.Arguments,
             WorkingDirectory = workingDirectory,
             UseShellExecute = true
         };
 
         var process = _processProvider.Start(startInfo);
-        _logger.Info(@$"Server started, waiting for exit: ""{serverPath}""");
+        _logger.Info(@$"Server started, waiting for exit: ""{serverParameters}""");
 
         await _processProvider.WaitForExitAsync(process);
         _logger.Info("Server exited");

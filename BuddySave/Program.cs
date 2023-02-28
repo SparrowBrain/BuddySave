@@ -39,7 +39,7 @@ namespace BuddySave
             try
             {
                 var configuration = await ConfigurationLoader.Load();
-                await Run(configuration.GameSave, configuration.Session, configuration.ServerPath);
+                await Run(configuration.GameSave, configuration.Session, configuration.ServerParameters);
             }
             catch (Exception ex)
             {
@@ -52,7 +52,7 @@ namespace BuddySave
             Logger.Info("Exit");
         }
 
-        private static async Task Run(GameSave gameSave, Session session, string serverPath)
+        private static async Task Run(GameSave gameSave, Session session, ServerParameters serverParameters)
         {
             var input = string.Empty;
             while (!string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
@@ -63,7 +63,7 @@ namespace BuddySave
                 switch (input?.ToLowerInvariant())
                 {
                     case "run":
-                        await GamingSession.Run(gameSave, session, serverPath);
+                        await GamingSession.Run(gameSave, session, serverParameters);
                         break;
 
                     case "load":

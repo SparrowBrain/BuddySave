@@ -20,10 +20,14 @@ namespace BuddySave.UnitTests.Core
             string serverPath,
             GameSave gameSave,
             Session session,
+            ServerParameters serverParameters,
             GamingSession sut)
         {
+            // Arrange
+            serverParameters.Path = serverPath;
+
             // Act
-            var act = new Func<Task>(() => sut.Run(gameSave, session, serverPath));
+            var act = new Func<Task>(() => sut.Run(gameSave, session, serverParameters));
 
             // Assert
             await Assert.ThrowsAsync<ArgumentException>(act);
@@ -37,14 +41,14 @@ namespace BuddySave.UnitTests.Core
             Exception exception,
             GameSave gameSave,
             Session session,
-            string serverPath,
+            ServerParameters serverParameters,
             GamingSession sut)
         {
             // Arrange
             sharedSaveOrchestratorMock.Setup(x => x.Load(It.IsAny<GameSave>(), It.IsAny<Session>())).Throws(exception);
 
             // Act
-            var act = new Func<Task>(() => sut.Run(gameSave, session, serverPath));
+            var act = new Func<Task>(() => sut.Run(gameSave, session, serverParameters));
 
             // Assert
             await Assert.ThrowsAnyAsync<Exception>(act);
@@ -59,14 +63,14 @@ namespace BuddySave.UnitTests.Core
             Exception exception,
             GameSave gameSave,
             Session session,
-            string serverPath,
+            ServerParameters serverParameters,
             GamingSession sut)
         {
             // Arrange
             processProviderMock.Setup(x => x.Start(It.IsAny<ProcessStartInfo>())).Throws(exception);
 
             // Act
-            var act = new Func<Task>(() => sut.Run(gameSave, session, serverPath));
+            var act = new Func<Task>(() => sut.Run(gameSave, session, serverParameters));
 
             // Assert
             await Assert.ThrowsAnyAsync<Exception>(act);
@@ -79,11 +83,11 @@ namespace BuddySave.UnitTests.Core
             [Frozen] Mock<IProcessProvider> processProviderMock,
             GameSave gameSave,
             Session session,
-            string serverPath,
+            ServerParameters serverParameters,
             GamingSession sut)
         {
             // Act
-            await sut.Run(gameSave, session, serverPath);
+            await sut.Run(gameSave, session, serverParameters);
 
             // Assert
             processProviderMock.Verify(x => x.WaitForExitAsync(It.IsAny<Process>()));
@@ -95,11 +99,11 @@ namespace BuddySave.UnitTests.Core
             [Frozen] Mock<ISharedSaveOrchestrator> sharedSaveOrchestratorMock,
             GameSave gameSave,
             Session session,
-            string serverPath,
+            ServerParameters serverParameters,
             GamingSession sut)
         {
             // Act
-            await sut.Run(gameSave, session, serverPath);
+            await sut.Run(gameSave, session, serverParameters);
 
             // Assert
             sharedSaveOrchestratorMock.Verify(x => x.Save(It.IsAny<GameSave>(), It.IsAny<Session>()));

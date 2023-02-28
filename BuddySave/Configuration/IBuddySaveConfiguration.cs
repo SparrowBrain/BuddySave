@@ -8,6 +8,7 @@ public interface IBuddySaveConfiguration
 
     public Session Session { get; }
 
+    ServerParameters ServerParameters { get; set; }
+
     public GameSave GameSave { get; }
-    string ServerPath { get; set; }
 }
