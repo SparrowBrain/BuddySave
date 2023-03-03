@@ -42,7 +42,10 @@ public class GamingSession : IGamingSession
         };
 
         var process = _processProvider.Start(startInfo);
-        _logger.Info(@$"Server started, waiting for exit: ""{serverParameters}""");
+        var serverString = string.IsNullOrEmpty(serverParameters.Arguments)
+            ? serverParameters.Path
+            : $"{serverParameters.Path} {serverParameters.Arguments}";
+        _logger.Info(@$"Server started, waiting for exit: ""{serverString}""");
 
         await _processProvider.WaitForExitAsync(process);
         _logger.Info("Server exited");
