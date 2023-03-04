@@ -18,7 +18,7 @@ public class GamingSession : IGamingSession
         _processProvider = processProvider;
     }
 
-    public async Task Run(GameSave gameSave, Session session, ServerParameters serverParameters)
+    public async Task RunServerWithAutoSave(GameSave gameSave, Session session, ServerParameters serverParameters)
     {
         if (string.IsNullOrWhiteSpace(serverParameters.Path))
         {
@@ -26,11 +26,12 @@ public class GamingSession : IGamingSession
         }
 
         await _sharedSaveOrchestrator.Load(gameSave, session);
-        await RunServer(serverParameters);
+        var process = StartServer(serverParameters);
+        await WaitForServerToStop(process);
         await _sharedSaveOrchestrator.Save(gameSave, session);
     }
 
-    private async Task RunServer(ServerParameters serverParameters)
+    private Process StartServer(ServerParameters serverParameters)
     {
         var workingDirectory = Path.GetDirectoryName(serverParameters.Path);
         var startInfo = new ProcessStartInfo()
@@ -47,6 +48,11 @@ public class GamingSession : IGamingSession
             : $"{serverParameters.Path} {serverParameters.Arguments}";
         _logger.Info(@$"Server started, waiting for exit: ""{serverString}""");
 
+        return process;
+    }
+
+    private async Task WaitForServerToStop(Process process)
+    {
         await _processProvider.WaitForExitAsync(process);
         _logger.Info("Server exited");
     }

@@ -63,7 +63,7 @@ namespace BuddySave
                 switch (input?.ToLowerInvariant())
                 {
                     case "run":
-                        await GamingSession.Run(gameSave, session, serverParameters);
+                        await GamingSession.RunServerWithAutoSave(gameSave, session, serverParameters);
                         break;
 
                     case "load":
