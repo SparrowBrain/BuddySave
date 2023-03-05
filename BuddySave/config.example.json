@@ -1,8 +1,12 @@
 ﻿{
   "CloudPath": "C:\\GoogleDrive\\BuddySave",
   "Session": {
-      "UserName": "buddy"
-    },
+    "UserName": "buddy"
+  },
+  "ServerParameters":{
+    "Path": "C:\\Program Files\\Steam\\steamapps\\common\Valheim dedicated server\\start_headless_server.bat",
+    "Arguments": ""
+  },
   "GameSave": {
     "GameName": "Valheim",
     "SaveName": "ServerWorld",

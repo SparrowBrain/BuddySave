@@ -11,6 +11,7 @@ namespace BuddySave
     internal class Program
     {
         private static readonly ISharedSaveOrchestrator SharedSaveOrchestrator;
+        private static readonly IGamingSession GamingSession;
         private static readonly Logger Logger;
         private static readonly IConfigurationLoader ConfigurationLoader;
 
@@ -23,9 +24,11 @@ namespace BuddySave
             var rollingBackups = new RollingBackups(Logger, backupDirectoryProvider, saveCopier);
             var backupManager = new BackupManager(rollingBackups, saveCopier, Logger);
             var gameSaveSyncManager = new GameSaveSyncManager(Logger, saveCopier, backupManager);
-            var clientNotifier = new ClientNotifier();
+            var clientNotifier = new ClientNotifier(Logger);
             var lockManager = new LockManager();
+            var processProvider = new ProcessProvider();
             SharedSaveOrchestrator = new SharedSaveOrchestrator(Logger, gameSaveSyncManager, lockManager, clientNotifier);
+            GamingSession = new GamingSession(Logger, SharedSaveOrchestrator, processProvider);
         }
 
         private static async Task Main()
@@ -36,7 +39,7 @@ namespace BuddySave
             try
             {
                 var configuration = await ConfigurationLoader.Load();
-                await Run(configuration.GameSave, configuration.Session);
+                await Run(configuration.GameSave, configuration.Session, configuration.ServerParameters);
             }
             catch (Exception ex)
             {
@@ -49,21 +52,27 @@ namespace BuddySave
             Logger.Info("Exit");
         }
 
-        private static async Task Run(GameSave gameSave, Session session)
+        private static async Task Run(GameSave gameSave, Session session, ServerParameters serverParameters)
         {
             var input = string.Empty;
             while (!string.Equals(input, "exit", StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine("Waiting for action command (load, save, exit):");
+                Console.WriteLine("Waiting for action command (run, load, save, exit):");
                 input = Console.ReadLine();
+
                 switch (input?.ToLowerInvariant())
                 {
+                    case "run":
+                        await GamingSession.RunServerWithAutoSave(gameSave, session, serverParameters);
+                        break;
+
                     case "load":
                         await SharedSaveOrchestrator.Load(gameSave, session);
                         break;
 
                     case "save":
                         await SharedSaveOrchestrator.Save(gameSave, session);
+
                         break;
 
                     case "exit":
