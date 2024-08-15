@@ -1,18 +1,11 @@
-﻿using NLog;
+﻿using Microsoft.Extensions.Logging;
 
 namespace BuddySave.Notifications;
 
-public class ClientNotifier : IClientNotifier
+public class ClientNotifier(ILogger<ClientNotifier> logger) : IClientNotifier
 {
-    private readonly ILogger _logger;
-
-    public ClientNotifier(ILogger logger)
-    {
-        _logger = logger;
-    }
-
     public void Notify(string text)
     {
-        _logger.Info(text);
+        logger.LogInformation(text);
     }
 }

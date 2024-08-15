@@ -1,40 +1,33 @@
 ﻿using BuddySave.Core.Models;
-using NLog;
+using Microsoft.Extensions.Logging;
 
 namespace BuddySave.FileManagement;
 
-public class BackupManager : IBackupManager
+public class BackupManager(
+    IRollingBackups rollingBackups, 
+    ISaveCopier saveCopier, 
+    ILogger<BackupManager> logger)
+    : IBackupManager
 {
-    private readonly IRollingBackups _rollingBackups;
-    private readonly ISaveCopier _saveCopier;
-    private readonly ILogger _logger;
-
-    public BackupManager(IRollingBackups rollingBackups, ISaveCopier saveCopier, ILogger logger)
-    {
-        _rollingBackups = rollingBackups;
-        _saveCopier = saveCopier;
-        _logger = logger;
-    }
-
     public void BackupFiles(string sourcePath, string gameName, string saveName, SaveType saveType)
     {
         try
         {
-            _saveCopier.ValidateSource(saveName, sourcePath);
+            saveCopier.ValidateSource(saveName, sourcePath);
         }
         catch
         {
-            _logger.Info($"Nothing to backup in {sourcePath}");
+            logger.LogInformation("Nothing to backup in {sourcePath}", sourcePath);
             return;
         }
 
-        _rollingBackups.Add(sourcePath, gameName, saveName, saveType);
+        rollingBackups.Add(sourcePath, gameName, saveName, saveType);
     }
 
     public void RestoreBackup(string destinationPath, string gameName, string saveName, SaveType saveType)
     {
-        var backupDirectory = _rollingBackups.GetMostRecent(gameName, saveName, saveType);
-        _saveCopier.ValidateSource(saveName, backupDirectory);
-        _saveCopier.CopyOverSaves(saveName, backupDirectory, destinationPath);
+        var backupDirectory = rollingBackups.GetMostRecent(gameName, saveName, saveType);
+        saveCopier.ValidateSource(saveName, backupDirectory);
+        saveCopier.CopyOverSaves(saveName, backupDirectory, destinationPath);
     }
 }

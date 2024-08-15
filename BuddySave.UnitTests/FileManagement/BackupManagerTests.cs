@@ -3,8 +3,8 @@ using AutoFixture.Xunit2;
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
 using BuddySave.TestTools;
+using Microsoft.Extensions.Logging;
 using Moq;
-using NLog;
 using Xunit;
 
 namespace BuddySave.UnitTests.FileManagement;
@@ -18,7 +18,7 @@ public class BackupManagerTests
         string savePath,
         SaveType saveType,
         [Frozen] Mock<ISaveCopier> saveCopierMock,
-        [Frozen] Mock<ILogger> loggerMock,
+        [Frozen] Mock<ILogger<BackupManager>> loggerMock,
         BackupManager sut)
     {
         // Arrange
@@ -29,7 +29,14 @@ public class BackupManagerTests
 
         // Assert
         saveCopierMock.Verify(x => x.CopyOverSaves(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-        loggerMock.Verify(x => x.Info($"Nothing to backup in {savePath}"));
+        loggerMock.Verify(
+            m => m.Log(
+                LogLevel.Information,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains($"Nothing to backup in {savePath}")),
+                It.IsAny<Exception>(),
+                It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true))
+        );
     }
 
     [Theory, AutoMoqData]

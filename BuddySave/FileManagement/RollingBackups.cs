@@ -1,32 +1,26 @@
 ﻿using BuddySave.Core.Models;
-using NLog;
+using Microsoft.Extensions.Logging;
 
 namespace BuddySave.FileManagement;
 
-public class RollingBackups : IRollingBackups
+public class RollingBackups(
+    ILogger<RollingBackups> logger, 
+    IBackupDirectoryProvider backupDirectoryProvider, 
+    ISaveCopier saveCopier)
+    : IRollingBackups
 {
     private const int MaxNumberOfRollingBackups = 10;
-    private readonly ILogger _logger;
-    private readonly IBackupDirectoryProvider _backupDirectoryProvider;
-    private readonly ISaveCopier _saveCopier;
-
-    public RollingBackups(ILogger logger, IBackupDirectoryProvider backupDirectoryProvider, ISaveCopier saveCopier)
-    {
-        _logger = logger;
-        _backupDirectoryProvider = backupDirectoryProvider;
-        _saveCopier = saveCopier;
-    }
 
     public string GetMostRecent(string gameName, string saveName, SaveType saveType)
     {
-        var savePath = _backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
+        var savePath = backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
         return Directory.GetDirectories(savePath).OrderByDescending(x => x).First();
     }
 
     public void Add(string sourcePath, string gameName, string saveName, SaveType saveType)
     {
-        var backupDir = _backupDirectoryProvider.GetTimestampedDirectory(gameName, saveName, saveType);
-        _saveCopier.CopyOverSaves(saveName, sourcePath, backupDir);
+        var backupDir = backupDirectoryProvider.GetTimestampedDirectory(gameName, saveName, saveType);
+        saveCopier.CopyOverSaves(saveName, sourcePath, backupDir);
 
         RemoveOldRollingBackup(gameName, saveName, saveType);
     }
@@ -41,7 +35,7 @@ public class RollingBackups : IRollingBackups
 
     private int GetCount(string gameName, string saveName, SaveType saveType)
     {
-        var savePath = _backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
+        var savePath = backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
         if (!Directory.Exists(savePath))
         {
             return 0;
@@ -54,12 +48,12 @@ public class RollingBackups : IRollingBackups
     {
         var oldest = GetOldestPath(gameName, saveName, saveType);
         Directory.Delete(oldest, true);
-        _logger.Info($"Old save {oldest} deleted");
+        logger.LogInformation("Old save {oldest} deleted", oldest);
     }
 
     private string GetOldestPath(string gameName, string saveName, SaveType saveType)
     {
-        var savePath = _backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
+        var savePath = backupDirectoryProvider.GetRootDirectory(gameName, saveName, saveType);
         return Directory.GetDirectories(savePath).OrderBy(x => x).First();
     }
 }

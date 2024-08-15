@@ -1,20 +1,13 @@
-﻿using Newtonsoft.Json;
-using NLog;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace BuddySave.Configuration;
 
-public class ConfigurationLoader : IConfigurationLoader
+public class ConfigurationLoader(ILogger<ConfigurationLoader> logger) : IConfigurationLoader
 {
-    private readonly ILogger _logger;
-
-    public ConfigurationLoader(ILogger logger)
-    {
-        _logger = logger;
-    }
-    
     public async Task<IBuddySaveConfiguration> Load()
     {
-        _logger.Info("Reading configuration file...");
+        logger.LogInformation("Reading configuration file...");
         var configFile = await File.ReadAllTextAsync(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json"));
         if (string.IsNullOrWhiteSpace(configFile))
         {
