@@ -1,29 +1,28 @@
-﻿namespace BuddySave.TestTools
+﻿namespace BuddySave.TestTools;
+
+public class TempDir : IDisposable
 {
-    public class TempDir : IDisposable
+    public TempDir(string dirName, bool create)
     {
-        public TempDir(string dirName, bool create)
+        Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), dirName);
+        if (create)
         {
-            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), dirName);
-            if (create)
-            {
-                Create();
-            }
+            Create();
         }
+    }
 
-        public string Path { get; }
+    public string Path { get; }
 
-        public void Dispose()
+    public void Dispose()
+    {
+        if (Directory.Exists(Path))
         {
-            if (Directory.Exists(Path))
-            {
-                Directory.Delete(Path, true);
-            }
+            Directory.Delete(Path, true);
         }
+    }
 
-        public void Create()
-        {
-            Directory.CreateDirectory(Path);
-        }
+    public void Create()
+    {
+        Directory.CreateDirectory(Path);
     }
 }

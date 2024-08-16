@@ -5,8 +5,8 @@ using BuddySave.Core;
 using BuddySave.Core.Models;
 using BuddySave.Notifications;
 using BuddySave.TestTools;
+using Microsoft.Extensions.Logging;
 using Moq;
-using NLog;
 using Xunit;
 
 namespace BuddySave.UnitTests.Core;
@@ -81,7 +81,7 @@ public class SharedSaveOrchestratorTests
         Session session,
         Exception exception,
         [Frozen] Mock<IGameSaveSyncManager> gameSaveSyncManagerMock,
-        [Frozen] Mock<ILogger> loggerMock,
+        [Frozen] Mock<ILogger<SharedSaveOrchestrator>> loggerMock,
         SharedSaveOrchestrator sut)
     {
         // Arrange
@@ -91,7 +91,14 @@ public class SharedSaveOrchestratorTests
         await sut.Load(gameSave, session);
 
         // Assert
-        loggerMock.Verify(x => x.Error(exception, "Error while loading."));
+        loggerMock.Verify(
+            m => m.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error while loading.")),
+                exception,
+                It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true))
+        );
     }
 
     [Theory, AutoMoqData]
@@ -240,7 +247,7 @@ public class SharedSaveOrchestratorTests
         Exception exception,
         [Frozen] Mock<IGameSaveSyncManager> gameSaveSyncManagerMock,
         [Frozen] Mock<ILockManager> lockManagerMock,
-        [Frozen] Mock<ILogger> loggerMock,
+        [Frozen] Mock<ILogger<SharedSaveOrchestrator>> loggerMock,
         SharedSaveOrchestrator sut)
     {
         // Arrange
@@ -251,6 +258,13 @@ public class SharedSaveOrchestratorTests
         await sut.Save(gameSave, session);
 
         // Assert
-        loggerMock.Verify(x => x.Error(exception, "Error while saving."));
+        loggerMock.Verify(
+            m => m.Log(
+                LogLevel.Error,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Error while saving.")),
+                exception,
+                It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true))
+        );
     }
 }

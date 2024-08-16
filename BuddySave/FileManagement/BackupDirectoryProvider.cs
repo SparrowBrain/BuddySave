@@ -3,19 +3,13 @@ using BuddySave.System;
 
 namespace BuddySave.FileManagement;
 
-public class BackupDirectoryProvider : IBackupDirectoryProvider
+public class BackupDirectoryProvider(IDateTimeProvider dateTimeProvider) : IBackupDirectoryProvider
 {
     private const string BackupDirectoryPrefix = "SavesBackup";
-    private readonly IDateTimeProvider _dateTimeProvider;
-
-    public BackupDirectoryProvider(IDateTimeProvider dateTimeProvider)
-    {
-        _dateTimeProvider = dateTimeProvider;
-    }
 
     public string GetTimestampedDirectory(string gameName, string saveName, SaveType saveType)
     {
-        return Path.Combine(GetRootDirectory(gameName, saveName, saveType), _dateTimeProvider.Now().ToString("yyyyMMdd_HHmmss"));
+        return Path.Combine(GetRootDirectory(gameName, saveName, saveType), dateTimeProvider.Now().ToString("yyyyMMdd_HHmmss"));
     }
 
     public string GetRootDirectory(string gameName, string saveName, SaveType saveType)
