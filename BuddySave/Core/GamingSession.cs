@@ -18,7 +18,12 @@ public class GamingSession(
             throw new ArgumentException("No server path provided. Cannot start a gaming session.");
         }
 
-        await sharedSaveOrchestrator.Load(gameSave, session);
+        var loadResult = await sharedSaveOrchestrator.Load(gameSave, session);
+        if (loadResult is not OrchestratorResult.Loaded)
+        {
+            return;
+        }
+        
         var process = StartServer(serverParameters);
         await WaitForServerToStop(process);
         await sharedSaveOrchestrator.Save(gameSave, session);
