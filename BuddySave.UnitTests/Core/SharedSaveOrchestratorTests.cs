@@ -33,6 +33,23 @@ public class SharedSaveOrchestratorTests
         lockManagerMock.Verify(x => x.CreateLock(It.IsAny<GameSave>(), It.IsAny<Session>()), Times.Never);
         gameSaveSyncManagerMock.Verify(x => x.DownloadSave(gameSave), Times.Never);
     }
+    
+    [Theory, AutoMoqData]
+    public async Task Load_ReturnSaveLockedResult_When_GameSaveIsLocked(
+        GameSave gameSave,
+        Session session,
+        [Frozen] Mock<ILockManager> lockManagerMock,
+        SharedSaveOrchestrator sut)
+    {
+        // Arrange
+        lockManagerMock.Setup(x => x.LockExists(It.IsAny<GameSave>())).Returns(true);
+
+        // Act
+        var result = await sut.Load(gameSave, session);
+
+        // Assert
+        Assert.Equal(OrchestratorResult.SaveLocked, result);
+    }
 
     [Theory, AutoMoqData]
     public async Task Load_CallDeleteLock_When_CreateLockThrowsException(
@@ -52,6 +69,23 @@ public class SharedSaveOrchestratorTests
         lockManagerMock.Verify(x => x.DeleteLock(gameSave, session), Times.Once);
         clientNotifierMock.Verify(x => x.Notify("Failed loading game save. Deleting game save lock..."), Times.Once);
         clientNotifierMock.Verify(x => x.Notify("Game save lock released."), Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task Load_ReturnFailedResult_When_CreateLockThrowsException(
+        GameSave gameSave,
+        Session session,
+        [Frozen] Mock<ILockManager> lockManagerMock,
+        SharedSaveOrchestrator sut)
+    {
+        // Arrange
+        lockManagerMock.Setup(x => x.CreateLock(It.IsAny<GameSave>(), It.IsAny<Session>())).Throws<Exception>();
+
+        // Act
+        var result = await sut.Load(gameSave, session);
+
+        // Assert
+        Assert.Equal(OrchestratorResult.Failed, result);
     }
 
     [Theory, AutoMoqData]
@@ -73,6 +107,23 @@ public class SharedSaveOrchestratorTests
         lockManagerMock.Verify(x => x.DeleteLock(gameSave, session), Times.Once);
         clientNotifierMock.Verify(x => x.Notify("Failed loading game save. Deleting game save lock..."), Times.Once);
         clientNotifierMock.Verify(x => x.Notify("Game save lock released."), Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task Load_ReturnFailedResult_When_DownloadThrowsException(
+        GameSave gameSave,
+        Session session,
+        [Frozen] Mock<IGameSaveSyncManager> gameSaveSyncManagerMock,
+        SharedSaveOrchestrator sut)
+    {
+        // Arrange
+        gameSaveSyncManagerMock.Setup(x => x.DownloadSave(It.IsAny<GameSave>())).Throws<Exception>();
+
+        // Act
+        var result = await sut.Load(gameSave, session);
+
+        // Assert
+        Assert.Equal(OrchestratorResult.Failed, result);
     }
 
     [Theory, AutoMoqData]
@@ -136,6 +187,23 @@ public class SharedSaveOrchestratorTests
         // Assert
         gameSaveSyncManagerMock.Verify(x => x.DownloadSave(gameSave), Times.Once);
         clientNotifierMock.Verify(x => x.Notify("Game save is prepared! Enjoy Buddy :)"), Times.Once);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task Load_ReturnLoadedResult_When_LoadIsSuccessful(
+        GameSave gameSave,
+        Session session,
+        [Frozen] Mock<ILockManager> lockManagerMock,
+        SharedSaveOrchestrator sut)
+    {
+        // Arrange
+        lockManagerMock.Setup(x => x.LockExists(It.IsAny<GameSave>(), It.IsAny<Session>())).ReturnsAsync(false);
+
+        // Act
+        var result = await sut.Load(gameSave, session);
+
+        // Assert
+        Assert.Equal(OrchestratorResult.Loaded, result);
     }
 
     [Theory, AutoMoqData]

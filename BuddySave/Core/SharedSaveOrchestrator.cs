@@ -11,29 +11,32 @@ public class SharedSaveOrchestrator(
     IClientNotifier clientNotifier)
     : ISharedSaveOrchestrator
 {
-    public async Task Load(GameSave gameSave, Session session)
+    public async Task<OrchestratorResult> Load(GameSave gameSave, Session session)
     {
+        OrchestratorResult result;
         if (lockManager.LockExists(gameSave))
         {
             clientNotifier.Notify("Game save is locked, your friends are playing!");
-            return;
+            return OrchestratorResult.SaveLocked;
         }
 
         try
         {
             await lockManager.CreateLock(gameSave, session);
             gameSaveSyncManager.DownloadSave(gameSave);
+            result = OrchestratorResult.Loaded;
         }
         catch (Exception ex)
         {
+            result = OrchestratorResult.Failed;
             logger.LogError(ex, "Error while loading.");
             clientNotifier.Notify("Failed loading game save. Deleting game save lock...");
             await lockManager.DeleteLock(gameSave, session);
             clientNotifier.Notify("Game save lock released.");
-            return;
         }
 
         clientNotifier.Notify("Game save is prepared! Enjoy Buddy :)");
+        return result;
     }
 
     public async Task Save(GameSave gameSave, Session session)
