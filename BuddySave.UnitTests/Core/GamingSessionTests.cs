@@ -76,6 +76,49 @@ public class GamingSessionTests
         // Assert
         processProviderMock.Verify(x => x.Start(It.IsAny<ProcessStartInfo>()), Times.Never());
     }
+    
+    [Theory]
+    [InlineAutoMoqData(OrchestratorResult.SaveLocked)]
+    [InlineAutoMoqData(OrchestratorResult.Failed)]
+    public async Task Run_DoesWaitForServerToStop_WhenGameSaveIsNotLoaded(
+        OrchestratorResult orchestratorResult,
+        [Frozen] Mock<ISharedSaveOrchestrator> sharedSaveOrchestratorMock,
+        [Frozen] Mock<IProcessProvider> processProviderMock,
+        GameSave gameSave,
+        Session session,
+        ServerParameters serverParameters,
+        GamingSession sut)
+    {
+        // Arrange
+        sharedSaveOrchestratorMock.Setup(x => x.Load(It.IsAny<GameSave>(), It.IsAny<Session>())).ReturnsAsync(orchestratorResult);
+
+        // Act
+        await sut.RunServerWithAutoSave(gameSave, session, serverParameters);
+        
+        // Assert
+        processProviderMock.Verify(x => x.WaitForExitAsync(It.IsAny<Process>()), Times.Never());
+    }
+    
+    [Theory]
+    [InlineAutoMoqData(OrchestratorResult.SaveLocked)]
+    [InlineAutoMoqData(OrchestratorResult.Failed)]
+    public async Task Run_DoesNotCallSave_WhenGameSaveIsNotLoaded(
+        OrchestratorResult orchestratorResult,
+        [Frozen] Mock<ISharedSaveOrchestrator> sharedSaveOrchestratorMock,
+        GameSave gameSave,
+        Session session,
+        ServerParameters serverParameters,
+        GamingSession sut)
+    {
+        // Arrange
+        sharedSaveOrchestratorMock.Setup(x => x.Load(It.IsAny<GameSave>(), It.IsAny<Session>())).ReturnsAsync(orchestratorResult);
+
+        // Act
+        await sut.RunServerWithAutoSave(gameSave, session, serverParameters);
+        
+        // Assert
+        sharedSaveOrchestratorMock.Verify(x => x.Save(It.IsAny<GameSave>(), It.IsAny<Session>()), Times.Never());
+    }
 
     [Theory]
     [AutoMoqData]
