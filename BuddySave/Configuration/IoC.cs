@@ -38,6 +38,8 @@ public static class IoC
             .AddSingleton<ISharedSaveOrchestrator, SharedSaveOrchestrator>()
             .AddSingleton<IGamingSession, GamingSession>()
             .AddSingleton<IDateTimeProvider, DateTimeProvider>()
+            .AddSingleton<IFileInfoProvider, FileInfoProvider>()
+            .AddSingleton<ILatestSaveTypeProvider, LatestSaveTypeProvider>()
             .BuildServiceProvider();
 
         return serviceProvider;

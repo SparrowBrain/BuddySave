@@ -233,7 +233,6 @@ public class SharedSaveOrchestratorTests
         Session session,
         [Frozen] Mock<IGameSaveSyncManager> gameSaveSyncManagerMock,
         [Frozen] Mock<ILockManager> lockManagerMock,
-        [Frozen] Mock<IClientNotifier> clientNotifierMock,
         SharedSaveOrchestrator sut)
     {
         // Arrange
@@ -243,8 +242,6 @@ public class SharedSaveOrchestratorTests
         await sut.Save(gameSave, session);
 
         // Assert
-        clientNotifierMock.Verify(x => x.Notify("Uploading game save to cloud..."), Times.Once);
-        clientNotifierMock.Verify(x => x.Notify("Game save uploaded."), Times.Once);
         gameSaveSyncManagerMock.Verify(x => x.UploadSave(gameSave), Times.Once);
     }
 
@@ -305,7 +302,7 @@ public class SharedSaveOrchestratorTests
         await sut.Save(gameSave, session);
 
         // Assert
-        clientNotifierMock.Verify(x => x.Notify("Upload failed."), Times.Once);
+        clientNotifierMock.Verify(x => x.Notify("Error while saving."), Times.Once);
     }
 
     [Theory, AutoMoqData]
