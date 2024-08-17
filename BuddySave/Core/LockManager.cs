@@ -19,25 +19,14 @@ public class LockManager : ILockManager
             return false;
         }
 
-        var sessionLock = await GetSessionLock(lockPath);
+        var sessionLock = await GetLockedSession(lockPath);
         return string.Equals(sessionLock.UserName, session.UserName);
     }
 
-    public async Task<Session> GetSessionLock(GameSave gameSave)
+    public async Task<Session> GetLockedSession(GameSave gameSave)
     {
         var lockPath = GetLockPath(gameSave);
-        return await GetSessionLock(lockPath);
-    }
-
-    private static async Task<Session> GetSessionLock(string lockPath)
-    {
-        var jsonString = await File.ReadAllTextAsync(lockPath);
-        if (string.IsNullOrWhiteSpace(jsonString))
-        {
-            throw new Exception("Cannot get session details from lock. Lock file is empty");
-        }
-
-        return JsonSerializer.Deserialize<Session>(jsonString)!;
+        return await GetLockedSession(lockPath);
     }
 
     public async Task CreateLock(GameSave gameSave, Session session)
@@ -57,7 +46,7 @@ public class LockManager : ILockManager
             return;
         }
 
-        var sessionLock = await GetSessionLock(lockPath);
+        var sessionLock = await GetLockedSession(lockPath);
         if (!string.Equals(session.UserName, sessionLock.UserName))
         {
             throw new Exception($"Cannot delete lock. Lock is owned by {sessionLock.UserName}.");
@@ -69,5 +58,16 @@ public class LockManager : ILockManager
     private static string GetLockPath(GameSave gameSave)
     {
         return gameSave.CloudPath + ".lock";
+    }
+
+    private static async Task<Session> GetLockedSession(string lockPath)
+    {
+        var jsonString = await File.ReadAllTextAsync(lockPath);
+        if (string.IsNullOrWhiteSpace(jsonString))
+        {
+            throw new Exception("Cannot get session details from lock. Lock file is empty");
+        }
+
+        return JsonSerializer.Deserialize<Session>(jsonString)!;
     }
 }

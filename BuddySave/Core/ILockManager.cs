@@ -8,7 +8,7 @@ public interface ILockManager
     
     Task<bool> LockExists(GameSave gameSave, Session session);
     
-    Task<Session> GetSessionLock(GameSave gameSave);
+    Task<Session> GetLockedSession(GameSave gameSave);
 
     Task CreateLock(GameSave gameSave, Session session);
 

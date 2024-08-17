@@ -24,7 +24,7 @@ public class SharedSaveOrchestratorTests
     {
         // Arrange
         lockManagerMock.Setup(x => x.LockExists(It.IsAny<GameSave>())).Returns(true);
-        lockManagerMock.Setup(x => x.GetSessionLock(It.IsAny<GameSave>())).ReturnsAsync(session);
+        lockManagerMock.Setup(x => x.GetLockedSession(It.IsAny<GameSave>())).ReturnsAsync(session);
 
         // Act
         await sut.Load(gameSave, session);
@@ -45,7 +45,7 @@ public class SharedSaveOrchestratorTests
     {
         // Arrange
         lockManagerMock.Setup(x => x.LockExists(It.IsAny<GameSave>())).Returns(true);
-        lockManagerMock.Setup(x => x.GetSessionLock(It.IsAny<GameSave>())).ReturnsAsync(session);
+        lockManagerMock.Setup(x => x.GetLockedSession(It.IsAny<GameSave>())).ReturnsAsync(session);
 
         // Act
         var result = await sut.Load(gameSave, session);

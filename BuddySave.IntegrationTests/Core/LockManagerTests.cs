@@ -25,12 +25,13 @@ public class LockManagerTests
 
     [Theory, AutoMoqData]
     public async Task LockExists_ReturnsTrue_WhenLockFileExists(
+        Session session,
         GameSave gameSave,
         LockManager sut)
     {
         // Arrange
         using var lockFile = new TempLockFile();
-        await lockFile.Create();
+        await lockFile.Create(session);
         gameSave.CloudPath = lockFile.CloudPath;
 
         // Act
@@ -91,14 +92,50 @@ public class LockManagerTests
     }
 
     [Theory, AutoMoqData]
-    public async Task CreateLock_ThrowsException_WhenLockExists(
+    public async Task GetLockedSession_ThrowsException_WhenLockFileIsEmpty(
         GameSave gameSave,
-        Session session,
         LockManager sut)
     {
         // Arrange
         using var lockFile = new TempLockFile();
         await lockFile.Create();
+        gameSave.CloudPath = lockFile.CloudPath;
+        
+        // Act
+        var act = new Func<Task>(async () => await sut.GetLockedSession(gameSave));
+
+        // Assert
+        await Assert.ThrowsAnyAsync<Exception>(act);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetLockedSession_ReturnSession_WhenLockFileIsEmpty(
+        Session session,
+        GameSave gameSave,
+        LockManager sut)
+    {
+        // Arrange
+        using var lockFile = new TempLockFile();
+        await lockFile.Create(session);
+        gameSave.CloudPath = lockFile.CloudPath;
+        
+        // Act
+        var result = await sut.GetLockedSession(gameSave);
+
+        // Assert
+        Assert.Equivalent(session, result);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task CreateLock_ThrowsException_WhenLockExists(
+        GameSave gameSave,
+        Session lockedSession,
+        Session session,
+        LockManager sut)
+    {
+        // Arrange
+        using var lockFile = new TempLockFile();
+        await lockFile.Create(lockedSession);
         gameSave.CloudPath = lockFile.CloudPath;
 
         // Act
@@ -198,10 +235,10 @@ public class LockManagerTests
         {
             File.Delete(LockPath);
         }
-
+        
         public async Task Create()
         {
-            await File.WriteAllTextAsync(LockPath, "This is a test lock");
+            await File.WriteAllTextAsync(LockPath, null);
         }
 
         public async Task Create(Session session)
