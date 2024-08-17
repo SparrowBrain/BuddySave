@@ -47,23 +47,6 @@ public class GameSaveSyncManagerTests
     }
 
     [Theory, AutoMoqData]
-    public void UploadSave_NotifyClient_When_CloudSaveIsNewer(
-        [Frozen] Mock<ILatestSaveTypeProvider> latestSaveTypeProviderMock,
-        [Frozen] Mock<IClientNotifier> clientNotifierMock,
-        GameSave save,
-        GameSaveSyncManager sut)
-    {
-        // Arrange
-        latestSaveTypeProviderMock.Setup(x => x.Get(save)).Returns(SaveType.Cloud);
-
-        // Act
-        sut.UploadSave(save);
-
-        // Assert
-        clientNotifierMock.Verify(x => x.Notify("Newer save found in Cloud, uploading game save skipped!!"), Times.Once);
-    }
-
-    [Theory, AutoMoqData]
     public void UploadSave_LogInformation_When_CloudSaveIsNewer(
         [Frozen] Mock<ILatestSaveTypeProvider> latestSaveTypeProviderMock,
         [Frozen] Mock<ILogger<GameSaveSyncManager>> loggerMock,
@@ -177,27 +160,6 @@ public class GameSaveSyncManagerTests
     [Theory, AutoMoqData]
     public void UploadSave_LogsError_When_UploadFails(
         [Frozen] Mock<ISaveCopier> saveCopierMock,
-        [Frozen] Mock<IClientNotifier> clientNotifierMock,
-        [Frozen] Mock<ILatestSaveTypeProvider> latestSaveTypeProviderMock,
-        GameSave save,
-        Exception exception,
-        GameSaveSyncManager sut)
-    {
-        // Arrange
-        saveCopierMock.Setup(x => x.CopyOverSaves(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Throws(exception);
-        latestSaveTypeProviderMock.Setup(x => x.Get(save)).Returns(SaveType.Local);
-
-        // Act
-        var act = new Action(() => sut.UploadSave(save));
-
-        // Assert
-        Assert.Throws<Exception>(act);
-        clientNotifierMock.Verify(x => x.Notify("Upload failed."), Times.Once);
-    }
-
-    [Theory, AutoMoqData]
-    public void UploadSave_NotifyClient_When_UploadFails(
-        [Frozen] Mock<ISaveCopier> saveCopierMock,
         [Frozen] Mock<ILogger<GameSaveSyncManager>> loggerMock,
         [Frozen] Mock<ILatestSaveTypeProvider> latestSaveTypeProviderMock,
         GameSave save,
@@ -297,23 +259,6 @@ public class GameSaveSyncManagerTests
     }
 
     [Theory, AutoMoqData]
-    public void DownloadSave_NotifiesClient_When_LocalSaveIsNewer(
-        [Frozen] Mock<ILatestSaveTypeProvider> latestSaveTypeProviderMock,
-        [Frozen] Mock<IClientNotifier> clientNotifierMock,
-        GameSave save,
-        GameSaveSyncManager sut)
-    {
-        // Arrange
-        latestSaveTypeProviderMock.Setup(x => x.Get(save)).Returns(SaveType.Local);
-
-        // Act
-        sut.DownloadSave(save);
-
-        // Assert
-        clientNotifierMock.Verify(x => x.Notify("Newer Local game save was found, downloading game save skipped!!"), Times.Once);
-    }
-
-    [Theory, AutoMoqData]
     public void DownloadSave_LogsInformation_When_LocalSaveIsNewer(
         [Frozen] Mock<ILatestSaveTypeProvider> latestSaveTypeProviderMock,
         [Frozen] Mock<ILogger<GameSaveSyncManager>> loggerMock,
@@ -399,24 +344,5 @@ public class GameSaveSyncManagerTests
                 exception,
                 It.Is<Func<It.IsAnyType, Exception?, string>>((v, t) => true)),
             Times.Once);
-    }
-
-    [Theory, AutoMoqData]
-    public void DownloadSave_NotifiesClient_When_DownloadFails(
-        [Frozen] Mock<ISaveCopier> saveCopierMock,
-        [Frozen] Mock<IClientNotifier> clientNotifierMock,
-        GameSave save,
-        Exception exception,
-        GameSaveSyncManager sut)
-    {
-        // Arrange
-        saveCopierMock.Setup(x => x.CopyOverSaves(save.SaveName, save.CloudPath, save.LocalPath)).Throws(exception);
-
-        // Act
-        var act = new Action(() => sut.DownloadSave(save));
-
-        // Assert
-        Assert.Throws<Exception>(act);
-        clientNotifierMock.Verify(x => x.Notify("Download failed."), Times.Once);
     }
 }

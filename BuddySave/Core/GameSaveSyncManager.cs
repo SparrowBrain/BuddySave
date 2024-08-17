@@ -24,7 +24,6 @@ public class GameSaveSyncManager(
             {
                 const string skippedLogMessage = "Newer save found in Cloud, uploading game save skipped!!";
                 logger.LogInformation(skippedLogMessage);
-                clientNotifier.Notify(skippedLogMessage);
                 return;
             }
             
@@ -36,7 +35,6 @@ public class GameSaveSyncManager(
         {
             const string failedLogMessage = "Upload failed.";
             logger.LogError(ex, failedLogMessage);
-            clientNotifier.Notify(failedLogMessage);
             backupManager.RestoreBackup(gameSave.CloudPath, gameSave.GameName, gameSave.SaveName, SaveType.Cloud);
             throw;
         }
@@ -53,7 +51,6 @@ public class GameSaveSyncManager(
             {
                 const string skippedLogMessage = "Newer Local game save was found, downloading game save skipped!!";
                 logger.LogInformation(skippedLogMessage);
-                clientNotifier.Notify(skippedLogMessage);
                 return;
             }
 
@@ -65,7 +62,6 @@ public class GameSaveSyncManager(
         {
             const string failedLogMessage = "Download failed.";
             logger.LogError(ex, failedLogMessage);
-            clientNotifier.Notify(failedLogMessage);
             backupManager.RestoreBackup(gameSave.LocalPath, gameSave.GameName, gameSave.SaveName, SaveType.Local);
             throw;
         }
