@@ -1,4 +1,5 @@
-﻿using BuddySave.Core.Models;
+﻿using System.Text.Json;
+using BuddySave.Core.Models;
 
 namespace BuddySave.Core;
 
@@ -17,45 +18,56 @@ public class LockManager : ILockManager
         {
             return false;
         }
-        
-        var lockedByUserName = await GetUserNameWhoHasLock(lockPath);
-        return string.Equals(lockedByUserName, session.UserName);
+
+        var sessionLock = await GetSessionLock(lockPath);
+        return string.Equals(sessionLock.UserName, session.UserName);
+    }
+
+    public async Task<Session> GetSessionLock(GameSave gameSave)
+    {
+        var lockPath = GetLockPath(gameSave);
+        return await GetSessionLock(lockPath);
+    }
+
+    private static async Task<Session> GetSessionLock(string lockPath)
+    {
+        var jsonString = await File.ReadAllTextAsync(lockPath);
+        if (string.IsNullOrWhiteSpace(jsonString))
+        {
+            throw new Exception("Cannot get session details from lock. Lock file is empty");
+        }
+
+        return JsonSerializer.Deserialize<Session>(jsonString)!;
     }
 
     public async Task CreateLock(GameSave gameSave, Session session)
     {
         var lockPath = GetLockPath(gameSave);
+        var json = JsonSerializer.Serialize(session);
         await using var fileWriter = new FileStream(lockPath, FileMode.CreateNew);
         await using var streamWriter = new StreamWriter(fileWriter);
-        await streamWriter.WriteLineAsync(session.UserName);
+        await streamWriter.WriteAsync(json);
     }
 
     public async Task DeleteLock(GameSave gameSave, Session session)
     {
         var lockPath = GetLockPath(gameSave);
-
         if (!File.Exists(lockPath))
         {
             return;
         }
-        
-        var lockedByUserName = await GetUserNameWhoHasLock(lockPath);
-        if (!string.Equals(session.UserName, lockedByUserName))
+
+        var sessionLock = await GetSessionLock(lockPath);
+        if (!string.Equals(session.UserName, sessionLock.UserName))
         {
-            throw new Exception($"Cannot delete lock. Lock is owned by {lockedByUserName}.");
+            throw new Exception($"Cannot delete lock. Lock is owned by {sessionLock.UserName}.");
         }
-        
+
         File.Delete(lockPath);
     }
 
     private static string GetLockPath(GameSave gameSave)
     {
         return gameSave.CloudPath + ".lock";
-    }
-
-    private static async Task<string> GetUserNameWhoHasLock(string path)
-    {
-        var userName = (await File.ReadAllTextAsync(path)).Trim();
-        return userName;
     }
 }

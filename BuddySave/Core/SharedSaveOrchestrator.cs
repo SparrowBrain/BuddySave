@@ -16,7 +16,9 @@ public class SharedSaveOrchestrator(
         OrchestratorResult result;
         if (lockManager.LockExists(gameSave))
         {
+            var sessionLock = await lockManager.GetSessionLock(gameSave);
             clientNotifier.Notify("Game save is locked, your friends are playing!");
+            clientNotifier.Notify($"Connect to {sessionLock.UserName}'s server using {sessionLock.Ip}:{sessionLock.Port}");
             return OrchestratorResult.SaveLocked;
         }
 
