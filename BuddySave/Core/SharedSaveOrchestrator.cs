@@ -49,14 +49,13 @@ public class SharedSaveOrchestrator(
 
         try
         {
-            clientNotifier.Notify("Uploading game save to cloud...");
             gameSaveSyncManager.UploadSave(gameSave);
-            clientNotifier.Notify("Game save uploaded.");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error while saving.");
-            clientNotifier.Notify("Upload failed.");
+            const string errorLogMessage = "Error while saving.";
+            logger.LogError(ex, errorLogMessage);
+            clientNotifier.Notify(errorLogMessage);
         }
         finally
         {

@@ -1,5 +1,6 @@
 using BuddySave.Core.Models;
 using BuddySave.FileManagement;
+using BuddySave.Notifications;
 using Microsoft.Extensions.Logging;
 
 namespace BuddySave.Core;
@@ -7,7 +8,9 @@ namespace BuddySave.Core;
 public class GameSaveSyncManager(
     ILogger<GameSaveSyncManager> logger, 
     ISaveCopier saveCopier, 
-    IBackupManager backupManager)
+    IBackupManager backupManager,
+    ILatestSaveTypeProvider latestSaveTypeProvider,
+    IClientNotifier clientNotifier)
     : IGameSaveSyncManager
 {
     public void UploadSave(GameSave gameSave)
@@ -17,12 +20,23 @@ public class GameSaveSyncManager(
 
         try
         {
+            if (latestSaveTypeProvider.Get(gameSave) is SaveType.Cloud)
+            {
+                const string skippedLogMessage = "Newer save found in Cloud, uploading game save skipped!!";
+                logger.LogInformation(skippedLogMessage);
+                return;
+            }
+            
+            clientNotifier.Notify("Uploading game save to cloud...");
             saveCopier.CopyOverSaves(gameSave.SaveName, gameSave.LocalPath, gameSave.CloudPath);
+            clientNotifier.Notify("Game save uploaded.");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Upload failed.");
+            const string failedLogMessage = "Upload failed.";
+            logger.LogError(ex, failedLogMessage);
             backupManager.RestoreBackup(gameSave.CloudPath, gameSave.GameName, gameSave.SaveName, SaveType.Cloud);
+            throw;
         }
     }
 
@@ -33,12 +47,23 @@ public class GameSaveSyncManager(
 
         try
         {
+            if (latestSaveTypeProvider.Get(gameSave) is SaveType.Local)
+            {
+                const string skippedLogMessage = "Newer Local game save was found, downloading game save skipped!!";
+                logger.LogInformation(skippedLogMessage);
+                return;
+            }
+
+            clientNotifier.Notify("Downloading game save from cloud...");
             saveCopier.CopyOverSaves(gameSave.SaveName, gameSave.CloudPath, gameSave.LocalPath);
+            clientNotifier.Notify("Game save downloaded.");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Download failed.");
+            const string failedLogMessage = "Download failed.";
+            logger.LogError(ex, failedLogMessage);
             backupManager.RestoreBackup(gameSave.LocalPath, gameSave.GameName, gameSave.SaveName, SaveType.Local);
+            throw;
         }
     }
 }

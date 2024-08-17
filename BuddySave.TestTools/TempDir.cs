@@ -21,7 +21,7 @@ public class TempDir : IDisposable
         }
     }
 
-    public void Create()
+    private void Create()
     {
         Directory.CreateDirectory(Path);
     }
