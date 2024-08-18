@@ -24,12 +24,14 @@ public class SharedSaveOrchestratorTests
     {
         // Arrange
         lockManagerMock.Setup(x => x.LockExists(It.IsAny<GameSave>())).Returns(true);
+        lockManagerMock.Setup(x => x.GetLockedSession(It.IsAny<GameSave>())).ReturnsAsync(session);
 
         // Act
         await sut.Load(gameSave, session);
 
         // Assert
         clientNotifierMock.Verify(x => x.Notify("Game save is locked, your friends are playing!"), Times.Once);
+        clientNotifierMock.Verify(x => x.Notify($"Connect to {session.UserName}'s server using {session.Ip}:{session.Port}"), Times.Once);
         lockManagerMock.Verify(x => x.CreateLock(It.IsAny<GameSave>(), It.IsAny<Session>()), Times.Never);
         gameSaveSyncManagerMock.Verify(x => x.DownloadSave(gameSave), Times.Never);
     }
@@ -43,6 +45,7 @@ public class SharedSaveOrchestratorTests
     {
         // Arrange
         lockManagerMock.Setup(x => x.LockExists(It.IsAny<GameSave>())).Returns(true);
+        lockManagerMock.Setup(x => x.GetLockedSession(It.IsAny<GameSave>())).ReturnsAsync(session);
 
         // Act
         var result = await sut.Load(gameSave, session);

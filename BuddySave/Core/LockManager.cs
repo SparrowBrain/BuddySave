@@ -1,4 +1,5 @@
-﻿using BuddySave.Core.Models;
+﻿using System.Text.Json;
+using BuddySave.Core.Models;
 
 namespace BuddySave.Core;
 
@@ -17,34 +18,40 @@ public class LockManager : ILockManager
         {
             return false;
         }
-        
-        var lockedByUserName = await GetUserNameWhoHasLock(lockPath);
-        return string.Equals(lockedByUserName, session.UserName);
+
+        var sessionLock = await GetLockedSession(lockPath);
+        return string.Equals(sessionLock.UserName, session.UserName);
+    }
+
+    public async Task<Session> GetLockedSession(GameSave gameSave)
+    {
+        var lockPath = GetLockPath(gameSave);
+        return await GetLockedSession(lockPath);
     }
 
     public async Task CreateLock(GameSave gameSave, Session session)
     {
         var lockPath = GetLockPath(gameSave);
+        var json = JsonSerializer.Serialize(session);
         await using var fileWriter = new FileStream(lockPath, FileMode.CreateNew);
         await using var streamWriter = new StreamWriter(fileWriter);
-        await streamWriter.WriteLineAsync(session.UserName);
+        await streamWriter.WriteAsync(json);
     }
 
     public async Task DeleteLock(GameSave gameSave, Session session)
     {
         var lockPath = GetLockPath(gameSave);
-
         if (!File.Exists(lockPath))
         {
             return;
         }
-        
-        var lockedByUserName = await GetUserNameWhoHasLock(lockPath);
-        if (!string.Equals(session.UserName, lockedByUserName))
+
+        var sessionLock = await GetLockedSession(lockPath);
+        if (!string.Equals(session.UserName, sessionLock.UserName))
         {
-            throw new Exception($"Cannot delete lock. Lock is owned by {lockedByUserName}.");
+            throw new Exception($"Cannot delete lock. Lock is owned by {sessionLock.UserName}.");
         }
-        
+
         File.Delete(lockPath);
     }
 
@@ -53,9 +60,14 @@ public class LockManager : ILockManager
         return gameSave.CloudPath + ".lock";
     }
 
-    private static async Task<string> GetUserNameWhoHasLock(string path)
+    private static async Task<Session> GetLockedSession(string lockPath)
     {
-        var userName = (await File.ReadAllTextAsync(path)).Trim();
-        return userName;
+        var jsonString = await File.ReadAllTextAsync(lockPath);
+        if (string.IsNullOrWhiteSpace(jsonString))
+        {
+            throw new Exception("Cannot get session details from lock. Lock file is empty");
+        }
+
+        return JsonSerializer.Deserialize<Session>(jsonString)!;
     }
 }

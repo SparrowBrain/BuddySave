@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.Json;
 using System.Threading.Tasks;
 using BuddySave.Core;
 using BuddySave.Core.Models;
@@ -24,12 +25,13 @@ public class LockManagerTests
 
     [Theory, AutoMoqData]
     public async Task LockExists_ReturnsTrue_WhenLockFileExists(
+        Session session,
         GameSave gameSave,
         LockManager sut)
     {
         // Arrange
         using var lockFile = new TempLockFile();
-        await lockFile.Create();
+        await lockFile.Create(session);
         gameSave.CloudPath = lockFile.CloudPath;
 
         // Act
@@ -55,16 +57,17 @@ public class LockManagerTests
     [Theory, AutoMoqData]
     public async Task LockExistsForUserName_ReturnsFalse_WhenSaveIsLockedByAnotherUserName(
         GameSave gameSave,
-        Session session,
+        Session lockedSession,
+        Session anotherSession,
         LockManager sut)
     {
         // Arrange
         using var lockFile = new TempLockFile();
-        await lockFile.Create("buddy");
+        await lockFile.Create(lockedSession);
         gameSave.CloudPath = lockFile.CloudPath;
 
         // Act
-        var result = await sut.LockExists(gameSave, session);
+        var result = await sut.LockExists(gameSave, anotherSession);
 
         // Assert
         Assert.False(result);
@@ -78,7 +81,7 @@ public class LockManagerTests
     {
         // Arrange
         using var lockFile = new TempLockFile();
-        await lockFile.Create(session.UserName);
+        await lockFile.Create(session);
         gameSave.CloudPath = lockFile.CloudPath;
 
         // Act
@@ -89,14 +92,50 @@ public class LockManagerTests
     }
 
     [Theory, AutoMoqData]
-    public async Task CreateLock_ThrowsException_WhenLockExists(
+    public async Task GetLockedSession_ThrowsException_WhenLockFileIsEmpty(
         GameSave gameSave,
-        Session session,
         LockManager sut)
     {
         // Arrange
         using var lockFile = new TempLockFile();
         await lockFile.Create();
+        gameSave.CloudPath = lockFile.CloudPath;
+        
+        // Act
+        var act = new Func<Task>(async () => await sut.GetLockedSession(gameSave));
+
+        // Assert
+        await Assert.ThrowsAnyAsync<Exception>(act);
+    }
+    
+    [Theory, AutoMoqData]
+    public async Task GetLockedSession_ReturnSession_WhenLockFileIsEmpty(
+        Session session,
+        GameSave gameSave,
+        LockManager sut)
+    {
+        // Arrange
+        using var lockFile = new TempLockFile();
+        await lockFile.Create(session);
+        gameSave.CloudPath = lockFile.CloudPath;
+        
+        // Act
+        var result = await sut.GetLockedSession(gameSave);
+
+        // Assert
+        Assert.Equivalent(session, result);
+    }
+
+    [Theory, AutoMoqData]
+    public async Task CreateLock_ThrowsException_WhenLockExists(
+        GameSave gameSave,
+        Session lockedSession,
+        Session session,
+        LockManager sut)
+    {
+        // Arrange
+        using var lockFile = new TempLockFile();
+        await lockFile.Create(lockedSession);
         gameSave.CloudPath = lockFile.CloudPath;
 
         // Act
@@ -122,7 +161,7 @@ public class LockManagerTests
         // Assert
         Assert.True(File.Exists(lockFile.LockPath));
         var expectedFileContent = (await File.ReadAllTextAsync(lockFile.LockPath)).Trim();
-        Assert.Equal(expectedFileContent, session.UserName);
+        Assert.Equal(expectedFileContent, JsonSerializer.Serialize(session));
     }
 
     [Theory, AutoMoqData]
@@ -133,7 +172,7 @@ public class LockManagerTests
     {
         // Arrange
         using var lockFile = new TempLockFile();
-        await lockFile.Create(session.UserName);
+        await lockFile.Create(session);
         gameSave.CloudPath = lockFile.CloudPath;
 
         // Act
@@ -163,20 +202,21 @@ public class LockManagerTests
     [Theory, AutoMoqData]
     public async Task DeleteLock_ThrowsException_WhenLockIsCreatedByAnotherUser(
         GameSave gameSave,
-        Session session,
+        Session lockedSession,
+        Session anotherSession,
         LockManager sut)
     {
         // Arrange
         using var lockFile = new TempLockFile();
-        await lockFile.Create("buddyUser");
+        await lockFile.Create(lockedSession);
         gameSave.CloudPath = lockFile.CloudPath;
 
         // Act
-        var act = new Func<Task>(async () => await sut.DeleteLock(gameSave, session));
+        var act = new Func<Task>(async () => await sut.DeleteLock(gameSave, anotherSession));
 
         // Assert
         var exception = await Assert.ThrowsAsync<Exception>(act);
-        Assert.Equal("Cannot delete lock. Lock is owned by buddyUser.", exception.Message);
+        Assert.Equal($"Cannot delete lock. Lock is owned by {lockedSession.UserName}.", exception.Message);
     }
 
     private class TempLockFile : IDisposable
@@ -195,15 +235,15 @@ public class LockManagerTests
         {
             File.Delete(LockPath);
         }
-
+        
         public async Task Create()
         {
-            await File.WriteAllTextAsync(LockPath, "This is a test lock");
+            await File.WriteAllTextAsync(LockPath, null);
         }
 
-        public async Task Create(string contents)
+        public async Task Create(Session session)
         {
-            await File.WriteAllTextAsync(LockPath, contents);
+            await File.WriteAllTextAsync(LockPath, JsonSerializer.Serialize(session));
         }
     }
 }

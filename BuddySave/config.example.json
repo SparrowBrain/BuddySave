@@ -1,10 +1,12 @@
 ﻿{
   "CloudPath": "C:\\GoogleDrive\\BuddySave",
   "Session": {
-    "UserName": "buddy"
+    "UserName": "buddy",
+    "Ip": "127.0.0.1",
+    "Port": "2456"
   },
   "ServerParameters":{
-    "Path": "C:\\Program Files\\Steam\\steamapps\\common\Valheim dedicated server\\start_headless_server.bat",
+    "Path": "C:\\Program Files\\Steam\\steamapps\\common\\Valheim dedicated server\\start_headless_server.bat",
     "Arguments": ""
   },
   "GameSave": {
