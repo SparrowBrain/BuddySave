@@ -6,7 +6,7 @@
     "Port": "2456"
   },
   "ServerParameters":{
-    "Path": "C:\\Program Files\\Steam\\steamapps\\common\Valheim dedicated server\\start_headless_server.bat",
+    "Path": "C:\\Program Files\\Steam\\steamapps\\common\\Valheim dedicated server\\start_headless_server.bat",
     "Arguments": ""
   },
   "GameSave": {
