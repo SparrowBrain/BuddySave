@@ -12,7 +12,7 @@ public class GamingSession(ILockManager lockManager, IServerSession serverSessio
 		var serverTask = Task.CompletedTask;
 		if (!lockExists)
 		{
-			serverTask = serverSession.RunServerWithAutoSave(gameSave, sessionToConnectTo, serverParameters);
+			serverTask = serverSession.RunServerWithAutoSave(gameSave, session, serverParameters);
 		}
 
 		clientSession.RunClient(sessionToConnectTo, clientParameters);
