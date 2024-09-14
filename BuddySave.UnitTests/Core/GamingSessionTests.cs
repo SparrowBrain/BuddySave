@@ -53,6 +53,8 @@ public class GamingSessionTests
 
 		// Assert
 		serverSessionMock.Verify(x => x.RunServerWithAutoSave(gameSave, session, serverParameters), Times.Once());
-		clientSessionMock.Verify(x => x.RunClient(session, clientParameters), Times.Once());
+		clientSessionMock.Verify(
+			x => x.RunClient(It.Is<Session>(s => s.Ip == "127.0.0.1" && s.Port == session.Port), clientParameters),
+			Times.Once());
 	}
 }

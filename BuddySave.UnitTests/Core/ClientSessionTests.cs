@@ -1,11 +1,11 @@
 ﻿using AutoFixture.Xunit2;
+using BuddySave.Core;
 using BuddySave.Core.Models;
 using BuddySave.System;
 using BuddySave.TestTools;
 using Moq;
 using System;
 using System.Diagnostics;
-using BuddySave.Core;
 using Xunit;
 
 namespace BuddySave.UnitTests.Core;
@@ -50,8 +50,8 @@ public class ClientSessionTests
 		// Assert
 		processProviderMock.Verify(
 			x => x.Start(It.Is<ProcessStartInfo>(x =>
-				x.FileName == clientParameters.Path
-				&& x.Arguments == expectedArguments)),
+				x.FileName == $"{clientParameters.Path} {expectedArguments}"
+				&& x.UseShellExecute == true)),
 			Times.Once());
 	}
 }
