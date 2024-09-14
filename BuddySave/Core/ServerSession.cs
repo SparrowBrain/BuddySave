@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 
 namespace BuddySave.Core;
 
-public class GamingSession(
-    ILogger<GamingSession> logger,
+public class ServerSession(
+    ILogger<ServerSession> logger,
     ISharedSaveOrchestrator sharedSaveOrchestrator,
     IProcessProvider processProvider)
     : IGamingSession
