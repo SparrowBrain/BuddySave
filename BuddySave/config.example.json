@@ -12,7 +12,7 @@
   "ClientParameters":{
 		"Path": "steam://rungameid/892970//",
 		"Arguments": "+connect {0}:{1}"
-	},}
+	},
   "GameSave": {
     "GameName": "Valheim",
     "SaveName": "ServerWorld",

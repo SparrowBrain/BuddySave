@@ -16,7 +16,7 @@ public class ServerSessionTests
 	[Theory]
 	[InlineAutoMoqData((string)null)]
 	[InlineAutoMoqData("")]
-	public async Task Run_ThrowsException_WhenNoServerPathIsEmpty(
+	public async Task Run_ThrowsException_WhenServerPathIsEmpty(
 		string serverPath,
 		GameSave gameSave,
 		Session session,

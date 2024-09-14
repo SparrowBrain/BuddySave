@@ -7,7 +7,7 @@ namespace BuddySave;
 
 internal sealed class App(
     ISharedSaveOrchestrator sharedSaveOrchestrator,
-    IGamingSession gamingSession,
+    IServerSession serverSession,
     ILogger<App> logger,
     IConfigurationLoader configurationLoader)
 {
@@ -44,7 +44,7 @@ internal sealed class App(
             switch (input?.ToLowerInvariant())
             {
                 case "run":
-                    await gamingSession.RunServerWithAutoSave(gameSave, session, serverParameters);
+                    await serverSession.RunServerWithAutoSave(gameSave, session, serverParameters);
                     break;
 
                 case "load":

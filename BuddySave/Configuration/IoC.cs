@@ -36,7 +36,7 @@ public static class IoC
             .AddSingleton<ILockManager, LockManager>()
             .AddSingleton<IProcessProvider, ProcessProvider>()
             .AddSingleton<ISharedSaveOrchestrator, SharedSaveOrchestrator>()
-            .AddSingleton<IGamingSession, ServerSession>()
+            .AddSingleton<IServerSession, ServerSession>()
             .AddSingleton<IDateTimeProvider, DateTimeProvider>()
             .AddSingleton<IFileInfoProvider, FileInfoProvider>()
             .AddSingleton<ILatestSaveTypeProvider, LatestSaveTypeProvider>()

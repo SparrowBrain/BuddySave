@@ -2,7 +2,7 @@
 
 namespace BuddySave.Core;
 
-public interface IGamingSession
+public interface IServerSession
 {
     Task RunServerWithAutoSave(GameSave gameSave, Session session, ServerParameters serverParameters);
 }

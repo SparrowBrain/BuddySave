@@ -9,7 +9,7 @@ public class ServerSession(
     ILogger<ServerSession> logger,
     ISharedSaveOrchestrator sharedSaveOrchestrator,
     IProcessProvider processProvider)
-    : IGamingSession
+    : IServerSession
 {
     public async Task RunServerWithAutoSave(GameSave gameSave, Session session, ServerParameters serverParameters)
     {
