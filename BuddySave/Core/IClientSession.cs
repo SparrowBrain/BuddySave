@@ -4,5 +4,5 @@ namespace BuddySave.Core;
 
 public interface IClientSession
 {
-	void RunClient(Session session, ClientParameters clientParameters);
+	void StartClient(Session session, ClientParameters clientParameters);
 }

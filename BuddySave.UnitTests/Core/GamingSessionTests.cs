@@ -30,7 +30,7 @@ public class GamingSessionTests
 		await sut.Play(gameSave, ourSession, serverParameters, clientParameters);
 
 		// Assert
-		clientSessionMock.Verify(x => x.RunClient(lockSession, clientParameters), Times.Once());
+		clientSessionMock.Verify(x => x.StartClient(lockSession, clientParameters), Times.Once());
 	}
 
 	[Theory]
@@ -54,7 +54,7 @@ public class GamingSessionTests
 		// Assert
 		serverSessionMock.Verify(x => x.RunServerWithAutoSave(gameSave, session, serverParameters), Times.Once());
 		clientSessionMock.Verify(
-			x => x.RunClient(It.Is<Session>(s => s.Ip == "127.0.0.1" && s.Port == session.Port), clientParameters),
+			x => x.StartClient(It.Is<Session>(s => s.Ip == "127.0.0.1" && s.Port == session.Port), clientParameters),
 			Times.Once());
 	}
 }

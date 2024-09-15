@@ -15,7 +15,7 @@ public class GamingSession(ILockManager lockManager, IServerSession serverSessio
 			serverTask = serverSession.RunServerWithAutoSave(gameSave, session, serverParameters);
 		}
 
-		clientSession.RunClient(sessionToConnectTo, clientParameters);
+		clientSession.StartClient(sessionToConnectTo, clientParameters);
 
 		await serverTask;
 	}

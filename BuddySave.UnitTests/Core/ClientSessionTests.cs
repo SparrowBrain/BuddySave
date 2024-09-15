@@ -15,7 +15,7 @@ public class ClientSessionTests
 	[Theory]
 	[InlineAutoMoqData("")]
 	[InlineAutoMoqData((string)null)]
-	public void RunClient_ThrowsArgumentException_WhenClientPathIsNull(
+	public void StartClient_ThrowsArgumentException_WhenClientPathIsNull(
 		string path,
 		Session session,
 		ClientParameters clientParameters,
@@ -25,7 +25,7 @@ public class ClientSessionTests
 		clientParameters.Path = path;
 
 		// Act
-		var exception = Record.Exception(() => sut.RunClient(session, clientParameters));
+		var exception = Record.Exception(() => sut.StartClient(session, clientParameters));
 
 		// Assert
 		Assert.NotNull(exception);
@@ -35,17 +35,18 @@ public class ClientSessionTests
 
 	[Theory]
 	[AutoMoqData]
-	public void RunClient_StartsClient(
+	public void StartClient_StartsClient(
 		[Frozen] Mock<IProcessProvider> processProviderMock,
 		Session session,
 		ClientParameters clientParameters,
 		ClientSession sut)
 	{
 		// Arrange
+		clientParameters.Arguments = "+connect {{Ip}}:{{Port}}";
 		var expectedArguments = $"+connect {session.Ip}:{session.Port}";
 
 		// Act
-		sut.RunClient(session, clientParameters);
+		sut.StartClient(session, clientParameters);
 
 		// Assert
 		processProviderMock.Verify(

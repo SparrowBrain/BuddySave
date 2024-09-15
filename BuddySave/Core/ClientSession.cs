@@ -7,14 +7,14 @@ namespace BuddySave.Core;
 
 public class ClientSession(IProcessProvider processProvider, ILogger<ClientSession> logger) : IClientSession
 {
-	public void RunClient(Session session, ClientParameters clientParameters)
+	public void StartClient(Session session, ClientParameters clientParameters)
 	{
 		if (string.IsNullOrEmpty(clientParameters.Path))
 		{
 			throw new ArgumentException("No client path provided. Cannot start a client session.");
 		}
 
-		var arguments = $"+connect {session.Ip}:{session.Port}";
+		var arguments = clientParameters.Arguments.Replace("{{Ip}}", session.Ip).Replace("{{Port}}", session.Port);
 		var startInfo = new ProcessStartInfo
 		{
 			FileName = $"{clientParameters.Path} {arguments}",
