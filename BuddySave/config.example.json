@@ -11,7 +11,7 @@
   },
   "ClientParameters":{
 		"Path": "steam://rungameid/892970//",
-		"Arguments": "+connect {0}:{1}"
+		"Arguments": "+connect {{Ip}}:{{Port}}"
 	},
   "GameSave": {
     "GameName": "Valheim",
