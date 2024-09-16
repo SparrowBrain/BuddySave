@@ -1,14 +1,17 @@
-﻿using BuddySave.Core.Models;
+﻿using BuddySave.Core;
+using BuddySave.Core.Models;
 
 namespace BuddySave.Configuration;
 
 public interface IBuddySaveConfiguration
 {
-    public string CloudPath { get; }
+	string CloudPath { get; set; }
 
-    public Session Session { get; }
+	Session Session { get; }
 
-    ServerParameters ServerParameters { get; set; }
+	ServerParameters ServerParameters { get; set; }
 
-    public GameSave GameSave { get; }
+	ClientParameters ClientParameters { get; set; }
+
+	GameSave GameSave { get; }
 }

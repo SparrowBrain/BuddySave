@@ -9,6 +9,10 @@
     "Path": "C:\\Program Files\\Steam\\steamapps\\common\\Valheim dedicated server\\start_headless_server.bat",
     "Arguments": ""
   },
+  "ClientParameters":{
+		"Path": "steam://rungameid/892970//",
+		"Arguments": "+connect {{Ip}}:{{Port}}"
+	},
   "GameSave": {
     "GameName": "Valheim",
     "SaveName": "ServerWorld",
