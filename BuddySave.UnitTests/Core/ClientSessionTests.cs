@@ -34,6 +34,27 @@ public class ClientSessionTests
 	}
 
 	[Theory]
+	[InlineAutoMoqData("")]
+	[InlineAutoMoqData((string)null)]
+	public void StartClient_ThrowsArgumentException_WhenClientArgumentsIsNull(
+		string arguments,
+		Session session,
+		ClientParameters clientParameters,
+		ClientSession sut)
+	{
+		// Arrange
+		clientParameters.Arguments = arguments;
+
+		// Act
+		var exception = Record.Exception(() => sut.StartClient(session, clientParameters));
+
+		// Assert
+		Assert.NotNull(exception);
+		Assert.IsType<ArgumentException>(exception);
+		Assert.Equal("No launch arguments provided for client. Cannot start a client session.", exception.Message);
+	}
+
+	[Theory]
 	[AutoMoqData]
 	public void StartClient_StartsClient(
 		[Frozen] Mock<IProcessProvider> processProviderMock,

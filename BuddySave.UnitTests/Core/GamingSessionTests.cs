@@ -15,6 +15,7 @@ public class GamingSessionTests
 	public async Task Play_StartsClient_WhenLockExists(
 		[Frozen] Mock<ILockManager> lockManagerMock,
 		[Frozen] Mock<IClientSession> clientSessionMock,
+		[Frozen] Mock<IServerSession> serverSessionMock,
 		GameSave gameSave,
 		Session ourSession,
 		Session lockSession,
@@ -31,6 +32,9 @@ public class GamingSessionTests
 
 		// Assert
 		clientSessionMock.Verify(x => x.StartClient(lockSession, clientParameters), Times.Once());
+		serverSessionMock.Verify(
+			x => x.RunServerWithAutoSave(It.IsAny<GameSave>(), It.IsAny<Session>(), It.IsAny<ServerParameters>()),
+			Times.Never);
 	}
 
 	[Theory]
